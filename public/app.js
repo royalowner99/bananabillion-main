@@ -2047,7 +2047,7 @@ let pendingAdReward = null;
 let adInProgress = false;
 
 // Monetag Ad Zone ID
-const MONETAG_ZONE_ID = '10246329';
+const MONETAG_ZONE_ID = '3128213';
 
 function watchAd(task) {
   if (adsWatchedToday >= MAX_ADS_PER_DAY) {
@@ -2093,10 +2093,10 @@ function watchAd(task) {
 // Show Monetag Rewarded Interstitial Ad
 function showMonetagAd(task, reward, btn) {
   // Check if Monetag SDK function is available
-  if (typeof window.show_10246329 === 'function') {
+  if (typeof window.show_3128213 === 'function') {
     console.log('Showing Monetag rewarded interstitial...');
     
-    window.show_10246329()
+    window.show_3128213()
       .then(() => {
         // User successfully watched the ad
         console.log('✅ Ad watched successfully!');
