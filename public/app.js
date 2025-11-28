@@ -2050,6 +2050,8 @@ let adInProgress = false;
 const MONETAG_ZONE_ID = '10246329';
 
 function watchAd(task) {
+  console.log('📺 watchAd called for task:', task.id);
+  
   if (adsWatchedToday >= MAX_ADS_PER_DAY) {
     showNotification('❌ Daily ad limit reached! Come back tomorrow.');
     return;
@@ -2060,13 +2062,16 @@ function watchAd(task) {
     return;
   }
   
+  // Try to find button (might not exist if called from popup)
   const btn = document.getElementById(`btn-${task.id}`);
-  if (!btn) return;
+  if (btn) {
+    btn.textContent = '⏳ Loading...';
+    btn.classList.add('loading');
+    btn.disabled = true;
+  }
   
-  btn.textContent = '⏳ Loading...';
-  btn.classList.add('loading');
-  btn.disabled = true;
   adInProgress = true;
+  showNotification('📺 Loading ad...');
   
   // Calculate reward for non-spin tasks
   let reward;
@@ -2083,8 +2088,10 @@ function watchAd(task) {
   pendingAdReward = {
     taskId: task.id,
     reward: reward,
-    btn: btn
+    btn: btn || null
   };
+  
+  console.log('🎯 Pending reward set:', pendingAdReward);
   
   // Try to show Monetag Rewarded Interstitial
   showMonetagAd(task, reward, btn);
@@ -2152,7 +2159,11 @@ function showMonetagAd(task, reward, btn) {
 
 // Reset ad button to original state
 function resetAdButton(btn) {
-  if (!btn) return;
+  adInProgress = false;
+  if (!btn) {
+    console.log('No button to reset');
+    return;
+  }
   btn.textContent = '▶️ Watch';
   btn.classList.remove('loading');
   btn.disabled = false;
