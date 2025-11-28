@@ -206,7 +206,7 @@ function updateAllUI() {
   
   // Update balances everywhere - ensure coins is a number
   const coins = Number(userData.coins) || 0;
-  const balanceElements = ['coinBalance', 'minersBalance', 'tasksBalance', 'friendsBalance', 'profileBalance', 'boostBalance'];
+  const balanceElements = ['coinBalance', 'minersBalance', 'tasksBalance', 'friendsBalance', 'profileBalance', 'boostBalance', 'leaderboardBalance'];
   balanceElements.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -608,7 +608,7 @@ function startPassiveIncome() {
 // Update only balance displays (lightweight)
 function updateBalanceDisplay() {
   const coins = Math.floor(Number(userData.coins) || 0);
-  const balanceElements = ['coinBalance', 'minersBalance', 'tasksBalance', 'friendsBalance', 'profileBalance'];
+  const balanceElements = ['coinBalance', 'minersBalance', 'tasksBalance', 'friendsBalance', 'profileBalance', 'leaderboardBalance'];
   balanceElements.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = formatNumber(coins);
