@@ -2092,34 +2092,60 @@ function watchAd(task) {
 
 // Show Monetag Rewarded Interstitial Ad
 function showMonetagAd(task, reward, btn) {
+  console.log('🎬 Attempting to show ad...');
+  console.log('📍 show_10246329 available:', typeof window.show_10246329);
+  
   // Check if Monetag SDK function is available
   if (typeof window.show_10246329 === 'function') {
-    console.log('Showing Monetag rewarded popup...');
+    console.log('✅ Monetag SDK found, showing rewarded popup...');
     
-    // Use rewarded popup format
-    window.show_10246329('pop')
-      .then(() => {
-        // User successfully watched the ad
-        console.log('✅ Ad watched successfully!');
-        adInProgress = false;
-        completeAdReward(task.id, reward, btn);
-      })
-      .catch((error) => {
-        // Ad was closed early or failed
-        console.log('❌ Ad error:', error);
-        adInProgress = false;
-        resetAdButton(btn);
-        pendingAdReward = null;
-        
-        if (error === 'closed' || error?.message?.includes('closed')) {
-          showNotification('❌ Please watch the full ad to get your reward!');
-        } else {
-          showNotification('❌ Ad failed to load. Try again.');
-        }
-      });
+    try {
+      // Use rewarded popup format
+      window.show_10246329('pop')
+        .then(() => {
+          // User successfully watched the ad
+          console.log('✅ Ad watched successfully!');
+          adInProgress = false;
+          completeAdReward(task.id, reward, btn);
+        })
+        .catch((error) => {
+          // Ad was closed early or failed
+          console.log('❌ Ad error:', error);
+          adInProgress = false;
+          resetAdButton(btn);
+          pendingAdReward = null;
+          
+          if (error === 'closed' || String(error).includes('closed')) {
+            showNotification('❌ Please watch the full ad to get your reward!');
+          } else {
+            showNotification('❌ Ad failed to load. Try again.');
+          }
+        });
+    } catch (e) {
+      console.error('❌ Ad exception:', e);
+      adInProgress = false;
+      showFallbackAd(task, reward, btn);
+    }
   } else {
-    // Fallback: Monetag SDK not loaded
-    console.log('⚠️ Monetag SDK not loaded, using fallback');
+    // Fallback: Monetag SDK not loaded - use fallback ad
+    console.log('⚠️ Monetag SDK not loaded, checking alternatives...');
+    
+    // Try without 'pop' parameter
+    if (typeof window.show_10246329 !== 'undefined') {
+      console.log('Trying show_10246329 without pop...');
+      try {
+        window.show_10246329().then(() => {
+          adInProgress = false;
+          completeAdReward(task.id, reward, btn);
+        }).catch(() => {
+          showFallbackAd(task, reward, btn);
+        });
+        return;
+      } catch (e) {
+        console.log('Failed:', e);
+      }
+    }
+    
     showFallbackAd(task, reward, btn);
   }
 }

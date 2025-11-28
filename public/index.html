@@ -8,6 +8,18 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Monetag Rewarded Popup Ad SDK -->
   <script src="//libtl.com/sdk.js" data-zone="10246329" data-sdk="show_10246329"></script>
+  <script>
+    // Check if Monetag SDK loaded
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (typeof window.show_10246329 === 'function') {
+          console.log('✅ Monetag SDK loaded successfully');
+        } else {
+          console.log('⚠️ Monetag SDK not loaded - ads may not work');
+        }
+      }, 2000);
+    });
+  </script>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
