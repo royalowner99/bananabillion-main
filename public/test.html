@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Banana Billion</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 { color: #667eea; }
+    .status { 
+      padding: 10px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px;
+    }
+    button:hover { background: #5568d3; }
+    .info { 
+      background: #e7f3ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🍌 Banana Billion Test Page</h1>
+    <p>Use this page to test the API endpoints</p>
+    
+    <div id="status"></div>
+    
+    <div class="info">
+      <h3>Server Status:</h3>
+      <p id="serverStatus">Checking...</p>
+    </div>
+    
+    <button onclick="testAPI()">Test API Connection</button>
+    <button onclick="window.location.href='/'">Open Game</button>
+    
+    <div class="info" style="margin-top: 30px;">
+      <h3>📝 Instructions:</h3>
+      <ol style="text-align: left;">
+        <li>Make sure MongoDB is connected</li>
+        <li>Run: <code>node scripts/initTasks.js</code></li>
+        <li>Start server: <code>npm start</code></li>
+        <li>Open in Telegram or test here</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    async function testAPI() {
+      const status = document.getElementById('status');
+      status.innerHTML = 'Testing...';
+      status.className = 'status';
+      
+      try {
+        // Test user init
+        const response = await fetch('/api/user/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId: '999999999',
+            username: 'testuser',
+            firstName: 'Test',
+            lastName: 'User'
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          status.innerHTML = '✅ API is working! User created/loaded successfully.';
+          status.className = 'status success';
+        } else {
+          status.innerHTML = '❌ API Error: ' + (data.error || 'Unknown error');
+          status.className = 'status error';
+        }
+      } catch (error) {
+        status.innerHTML = '❌ Connection Error: ' + error.message;
+        status.className = 'status error';
+      }
+    }
+    
+    async function checkServer() {
+      const serverStatus = document.getElementById('serverStatus');
+      try {
+        const response = await fetch('/api/task/all');
+        const data = await response.json();
+        
+        if (data.success) {
+          serverStatus.innerHTML = `✅ Server is running<br>📋 ${data.tasks.length} tasks loaded`;
+        } else {
+          serverStatus.innerHTML = '⚠️ Server running but no tasks found. Run initTasks.js';
+        }
+      } catch (error) {
+        serverStatus.innerHTML = '❌ Server not responding: ' + error.message;
+      }
+    }
+    
+    checkServer();
+  </script>
+</body>
+</html>

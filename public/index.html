@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🍌 Banana Billion - Mining Empire</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍌</text></svg>">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Monetag Rewarded Interstitial Ad SDK -->
+  <script src="//libtl.com/sdk.js" data-zone="10246329" data-sdk="show_10246329"></script>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Loading Screen -->
+    <div id="loading" class="screen active">
+      <div class="loading-content">
+        <div class="loading-logo">
+          <div class="banana-spin">🍌</div>
+          <div class="loading-ring"></div>
+        </div>
+        <h1 class="loading-title">BANANA BILLION</h1>
+        <p class="loading-subtitle">Mining Empire</p>
+        <div class="loading-bar">
+          <div class="loading-progress"></div>
+        </div>
+        <p class="loading-text">Initializing mining systems...</p>
+      </div>
+    </div>
+
+    <!-- Main Game Screen -->
+    <div id="game" class="screen">
+      <!-- Top Stats Bar -->
+      <div class="top-bar">
+        <div class="user-profile">
+          <div class="avatar">
+            <span id="avatarEmoji">🦍</span>
+          </div>
+          <div class="user-details">
+            <span class="username" id="username">Miner</span>
+            <div class="level-badge" onclick="showLevelInfo()">
+              <span class="level-icon">⭐</span>
+              <span id="userLevel">1</span>
+            </div>
+          </div>
+        </div>
+        <div class="balance-display">
+          <div class="balance-icon">🍌</div>
+          <div class="balance-info">
+            <span class="balance-label">BALANCE</span>
+            <span class="balance-amount" id="coinBalance">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mining Stats -->
+      <div class="mining-stats">
+        <div class="stat-card">
+          <div class="stat-icon">⛏️</div>
+          <div class="stat-info">
+            <span class="stat-value" id="miningPower">1</span>
+            <span class="stat-label">Mining Power</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💎</div>
+          <div class="stat-info">
+            <span class="stat-value" id="perHour">0</span>
+            <span class="stat-label">Per Hour</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-info">
+            <span class="stat-value" id="totalMined">0</span>
+            <span class="stat-label">Total Mined</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Mining Area -->
+      <div class="mining-area">
+        <div class="mining-container">
+          <!-- Particle effects container -->
+          <div class="particles" id="particles"></div>
+          
+          <!-- Mining button -->
+          <button id="mineButton" class="mine-button">
+            <div class="mine-glow"></div>
+            <div class="mine-ring ring-1"></div>
+            <div class="mine-ring ring-2"></div>
+            <div class="mine-ring ring-3"></div>
+            <div class="mine-icon">🍌</div>
+            <div class="mine-label">TAP TO MINE</div>
+          </button>
+          
+          <!-- Floating rewards -->
+          <div id="floatingRewards"></div>
+        </div>
+
+        <!-- Energy Bar -->
+        <div class="energy-container">
+          <div class="energy-bar">
+            <div class="energy-fill" id="energyFill"></div>
+            <div class="energy-glow"></div>
+          </div>
+          <div class="energy-info">
+            <span class="energy-icon">⚡</span>
+            <span class="energy-text">
+              <span id="currentEnergy">1000</span> / <span id="maxEnergy">1000</span>
+            </span>
+            <span class="energy-regen">+1/3s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation -->
+      <div class="bottom-nav">
+        <button class="nav-item active" data-screen="game">
+          <div class="nav-icon">⛏️</div>
+          <span class="nav-label">Mine</span>
+          <div class="nav-indicator"></div>
+        </button>
+        <button class="nav-item" data-screen="boost">
+          <div class="nav-icon">🚀</div>
+          <span class="nav-label">Boost</span>
+          <div class="nav-badge boost-badge" id="boostBadge">FREE</div>
+        </button>
+        <button class="nav-item" data-screen="tasks">
+          <div class="nav-icon">📋</div>
+          <span class="nav-label">Tasks</span>
+          <div class="nav-badge" id="taskBadge">8</div>
+        </button>
+        <button class="nav-item" data-screen="friends">
+          <div class="nav-icon">👥</div>
+          <span class="nav-label">Friends</span>
+        </button>
+        <button class="nav-item" data-screen="miners">
+          <div class="nav-icon">🤖</div>
+          <span class="nav-label">Miners</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Profile Screen -->
+    <div id="profile" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>👤 Profile</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="profileBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="profile-container">
+        <!-- Profile Card -->
+        <div class="profile-card">
+          <div class="profile-avatar-container">
+            <div class="profile-avatar" id="profileAvatar">
+              <img id="profilePhoto" src="" alt="Profile" style="display: none;">
+              <span id="profileEmoji">🦍</span>
+            </div>
+            <div class="profile-level-ring"></div>
+            <div class="profile-level-badge">
+              <span id="profileLevel">1</span>
+            </div>
+          </div>
+          <h2 class="profile-name" id="profileName">Miner</h2>
+          <p class="profile-username">@<span id="profileUsername">username</span></p>
+          <div class="profile-id">ID: <span id="profileId">000000000</span></div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="profile-stats-grid">
+          <div class="profile-stat-card">
+            <div class="profile-stat-icon">🍌</div>
+            <div class="profile-stat-value" id="profileCoins">0</div>
+            <div class="profile-stat-label">Total Coins</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="profile-stat-icon">⛏️</div>
+            <div class="profile-stat-value" id="profileTaps">0</div>
+            <div class="profile-stat-label">Total Taps</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="profile-stat-icon">💎</div>
+            <div class="profile-stat-value" id="profilePower">1</div>
+            <div class="profile-stat-label">Mining Power</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="profile-stat-icon">👥</div>
+            <div class="profile-stat-value" id="profileReferrals">0</div>
+            <div class="profile-stat-label">Referrals</div>
+          </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="profile-section">
+          <h3 class="section-title">🏆 Achievements</h3>
+          <div class="achievements-grid" id="achievementsList">
+            <div class="achievement-badge unlocked">
+              <span class="achievement-icon">🌟</span>
+              <span class="achievement-name">First Tap</span>
+            </div>
+            <div class="achievement-badge">
+              <span class="achievement-icon">💰</span>
+              <span class="achievement-name">10K Coins</span>
+            </div>
+            <div class="achievement-badge">
+              <span class="achievement-icon">🔥</span>
+              <span class="achievement-name">7 Day Streak</span>
+            </div>
+            <div class="achievement-badge">
+              <span class="achievement-icon">👑</span>
+              <span class="achievement-name">Level 10</span>
+            </div>
+            <div class="achievement-badge">
+              <span class="achievement-icon">🤖</span>
+              <span class="achievement-name">5 Miners</span>
+            </div>
+            <div class="achievement-badge">
+              <span class="achievement-icon">🎯</span>
+              <span class="achievement-name">All Tasks</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Info -->
+        <div class="profile-section">
+          <h3 class="section-title">📊 Account Info</h3>
+          <div class="account-info-list">
+            <div class="account-info-item">
+              <span class="info-label">Member Since</span>
+              <span class="info-value" id="profileJoined">-</span>
+            </div>
+            <div class="account-info-item">
+              <span class="info-label">Daily Streak</span>
+              <span class="info-value" id="profileStreak">0 days</span>
+            </div>
+            <div class="account-info-item">
+              <span class="info-label">Rank</span>
+              <span class="info-value" id="profileRank">#-</span>
+            </div>
+            <div class="account-info-item">
+              <span class="info-label">Energy Capacity</span>
+              <span class="info-value" id="profileEnergy">1000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Links -->
+        <div class="profile-section">
+          <h3 class="section-title">🔗 Connect</h3>
+          <div class="social-buttons">
+            <a href="https://t.me/bananabillion" target="_blank" class="social-btn telegram">
+              <span>📢</span> Channel
+            </a>
+            <a href="https://t.me/bananabilliongroup" target="_blank" class="social-btn telegram">
+              <span>👥</span> Group
+            </a>
+            <a href="https://twitter.com/BananaBillion" target="_blank" class="social-btn twitter">
+              <span>🐦</span> Twitter
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boost Screen -->
+    <div id="boost" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>🚀 Boosters</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="boostBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="boost-container">
+        <!-- Daily Free Boosters -->
+        <div class="boost-section">
+          <h3 class="boost-section-title">Your daily boosters:</h3>
+          <div class="daily-boosters-grid">
+            <div class="daily-booster-card" id="turboBooster">
+              <div class="daily-booster-icon">🚀</div>
+              <div class="daily-booster-info">
+                <span class="daily-booster-name">Turbo Tap</span>
+                <span class="daily-booster-uses"><span id="turboUsesLeft">3</span>/3</span>
+              </div>
+            </div>
+            <div class="daily-booster-card" id="fullEnergyBooster">
+              <div class="daily-booster-icon">⚡</div>
+              <div class="daily-booster-info">
+                <span class="daily-booster-name">Full Tank</span>
+                <span class="daily-booster-uses"><span id="fullEnergyUsesLeft">3</span>/3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Purchasable Boosters -->
+        <div class="boost-section">
+          <h3 class="boost-section-title">Boosters:</h3>
+          <div class="boosters-list" id="boostersList">
+            <!-- Boosters loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Miners Screen -->
+    <div id="miners" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>🤖 Mining Rigs</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="minersBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="miners-container" id="minersList">
+        <!-- Miners will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Tasks Screen -->
+    <div id="tasks" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>📋 Missions</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="tasksBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="tasks-tabs">
+        <button class="tab-btn active" data-tab="special">
+          Special
+          <div class="tab-dot" id="specialDot"></div>
+        </button>
+        <button class="tab-btn" data-tab="leagues">
+          Leagues
+          <div class="tab-dot" id="leaguesDot"></div>
+        </button>
+        <button class="tab-btn" data-tab="referral">
+          Ref
+        </button>
+        <button class="tab-btn" data-tab="premium">
+          Premium
+        </button>
+      </div>
+      
+      <!-- Special Tasks -->
+      <div class="tasks-container task-tab-content active" id="specialTasks">
+        <!-- Special tasks loaded dynamically -->
+      </div>
+      
+      <!-- Leagues Tasks -->
+      <div class="tasks-container task-tab-content" id="leaguesTasks">
+        <div class="leagues-list" id="leaguesList">
+          <!-- Leagues loaded dynamically -->
+        </div>
+      </div>
+      
+      <!-- Referral Tasks -->
+      <div class="tasks-container task-tab-content" id="referralTasks">
+        <div class="ref-tasks-list" id="refTasksList">
+          <!-- Referral tasks loaded dynamically -->
+        </div>
+      </div>
+      
+      <!-- Premium Tasks (Watch Ads) -->
+      <div class="tasks-container task-tab-content" id="premiumTasks">
+        <div class="premium-header">
+          <div class="premium-icon">💎</div>
+          <h3>Premium Rewards</h3>
+          <p>Watch ads to earn bonus coins!</p>
+          <div class="premium-counter">
+            <span id="adsWatched">0</span>/5 ads today
+          </div>
+        </div>
+        
+        <div class="premium-tasks-list" id="premiumTasksList">
+          <!-- Premium tasks loaded dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Friends Screen -->
+    <div id="friends" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>👥 Referral Network</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="friendsBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="friends-container">
+        <div class="referral-card">
+          <div class="referral-header">
+            <div class="referral-icon">🎁</div>
+            <div class="referral-info">
+              <h3>Invite Friends</h3>
+              <p>Earn 2,500 🍌 per friend!</p>
+            </div>
+          </div>
+          <div class="referral-code-box">
+            <span class="referral-label">Your Code</span>
+            <span class="referral-code" id="referralCode">LOADING</span>
+          </div>
+          <div class="referral-actions">
+            <button class="btn-primary" id="copyLinkBtn">
+              <span>📋</span> Copy Link
+            </button>
+            <button class="btn-secondary" id="shareLinkBtn">
+              <span>📤</span> Share
+            </button>
+          </div>
+        </div>
+        
+        <div class="referral-stats">
+          <div class="ref-stat">
+            <span class="ref-stat-value" id="totalReferrals">0</span>
+            <span class="ref-stat-label">Total Referrals</span>
+          </div>
+          <div class="ref-stat">
+            <span class="ref-stat-value" id="referralEarnings">0</span>
+            <span class="ref-stat-label">Coins Earned</span>
+          </div>
+        </div>
+        
+        <div class="referrals-list">
+          <h3>Your Referrals</h3>
+          <div id="referralsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>🏆 Leaderboard</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="leaderboardBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="leaderboard-tabs">
+        <button class="tab-btn active" data-lb="coins">💰 Richest</button>
+        <button class="tab-btn" data-lb="miners">⛏️ Top Miners</button>
+      </div>
+      
+      <div class="leaderboard-container" id="leaderboardList">
+        <!-- Leaderboard will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Daily Reward Modal -->
+    <div id="dailyModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>🎁 Daily Reward</h2>
+        </div>
+        <div class="modal-body">
+          <div class="daily-streak">
+            <span class="streak-label">Day Streak</span>
+            <span class="streak-value" id="streakValue">1</span>
+          </div>
+          <div class="daily-reward-display">
+            <span class="reward-icon">🍌</span>
+            <span class="reward-amount" id="dailyRewardAmount">500</span>
+          </div>
+          <button class="btn-claim" id="claimDailyBtn">Claim Reward</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level Up Modal -->
+    <div id="levelUpModal" class="modal">
+      <div class="modal-content level-up">
+        <div class="level-up-icon">🎉</div>
+        <h2>LEVEL UP!</h2>
+        <div class="new-level" id="newLevel">2</div>
+        <p>Mining power increased!</p>
+        <button class="btn-primary" id="closeLevelUp">Continue Mining</button>
+      </div>
+    </div>
+
+    <!-- Turbo Mode Indicator -->
+    <div class="turbo-active-indicator" id="turboIndicator">
+      🚀 TURBO <span class="turbo-timer">20s</span>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
