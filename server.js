@@ -32,11 +32,13 @@ try {
 const userRoutes = require('./routes/user');
 const gameRoutes = require('./routes/game');
 const taskRoutes = require('./routes/task');
+const adminRoutes = require('./routes/admin');
 
 // Use Routes
 app.use('/api/user', userRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/task', taskRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
