@@ -4,11 +4,17 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const { db } = require('../config/firebase');
 
-// Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Razorpay instance - only initialize if credentials are available
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  });
+  console.log('✅ Razorpay initialized');
+} else {
+  console.log('⚠️ Razorpay credentials not found - payment features disabled');
+}
 
 // Products configuration
 const PRODUCTS = {
@@ -97,6 +103,11 @@ const MYSTERY_BOX_REWARDS = {
 // Create order
 router.post('/create-order', async (req, res) => {
   try {
+    // Check if Razorpay is configured
+    if (!razorpay) {
+      return res.status(503).json({ success: false, message: 'Payment system not configured' });
+    }
+    
     const { telegramId, productId } = req.body;
     
     const product = PRODUCTS[productId];
