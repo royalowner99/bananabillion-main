@@ -8,6 +8,8 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Monetag Rewarded Popup Ad SDK -->
   <script src="//libtl.com/sdk.js" data-zone="10246329" data-sdk="show_10246329"></script>
+  <!-- Razorpay SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
     // Check if Monetag SDK loaded
     window.addEventListener('load', function() {
@@ -144,9 +146,9 @@
           <span class="nav-label">Tasks</span>
           <div class="nav-badge" id="taskBadge">8</div>
         </button>
-        <button class="nav-item" data-screen="friends">
-          <div class="nav-icon">👥</div>
-          <span class="nav-label">Friends</span>
+        <button class="nav-item" data-screen="shop">
+          <div class="nav-icon">🛒</div>
+          <span class="nav-label">Shop</span>
         </button>
         <button class="nav-item" data-screen="leaderboard">
           <div class="nav-icon">🏆</div>
@@ -473,6 +475,91 @@
       
       <div class="leaderboard-container" id="leaderboardList">
         <!-- Leaderboard will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Shop Screen -->
+    <div id="shop" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>🛒 Shop</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="shopBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="shop-content">
+        <!-- Mystery Boxes Section -->
+        <div class="shop-section">
+          <h3 class="shop-section-title">🎁 Mystery Boxes</h3>
+          <p class="shop-section-desc">Open boxes to win amazing rewards!</p>
+          
+          <div class="my-boxes-card">
+            <div class="boxes-icon">📦</div>
+            <div class="boxes-info">
+              <span class="boxes-label">Your Boxes</span>
+              <span class="boxes-count" id="userBoxCount">0</span>
+            </div>
+            <button class="open-box-btn" id="openBoxBtn" onclick="openMysteryBox()">
+              🎰 Open Box
+            </button>
+          </div>
+        </div>
+        
+        <!-- Buy Boxes Section -->
+        <div class="shop-section">
+          <h3 class="shop-section-title">💎 Premium Boxes</h3>
+          
+          <div class="product-card" onclick="buyProduct('mystery_box_single')">
+            <div class="product-badge">POPULAR</div>
+            <div class="product-icon">🎁</div>
+            <div class="product-info">
+              <div class="product-name">Mystery Box</div>
+              <div class="product-desc">10K-50K coins, boosters & more!</div>
+            </div>
+            <div class="product-price">
+              <span class="price-amount">₹49</span>
+              <span class="price-label">per box</span>
+            </div>
+          </div>
+          
+          <div class="product-card bundle" onclick="buyProduct('mystery_box_bundle')">
+            <div class="product-badge save">SAVE 20%</div>
+            <div class="product-icon">🎁🎁🎁</div>
+            <div class="product-info">
+              <div class="product-name">5x Mystery Box Bundle</div>
+              <div class="product-desc">Best value! 5 boxes for the price of 4</div>
+            </div>
+            <div class="product-price">
+              <span class="price-amount">₹199</span>
+              <span class="price-original">₹245</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Box Contents -->
+        <div class="shop-section">
+          <h3 class="shop-section-title">📋 Box Contents</h3>
+          <div class="box-contents">
+            <div class="content-item">
+              <span class="content-icon">💰</span>
+              <span class="content-text">10,000 - 50,000 Coins</span>
+            </div>
+            <div class="content-item">
+              <span class="content-icon">⚡</span>
+              <span class="content-text">3x or 5x Tap Booster</span>
+            </div>
+            <div class="content-item">
+              <span class="content-icon">🔋</span>
+              <span class="content-text">Full Energy Refill</span>
+            </div>
+            <div class="content-item">
+              <span class="content-icon">⭐</span>
+              <span class="content-text">Rare Miner Boost</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

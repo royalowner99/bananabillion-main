@@ -966,6 +966,9 @@ function switchScreen(screenName) {
   if (screenName === 'leaderboard') {
     loadLeaderboard();
   }
+  if (screenName === 'shop') {
+    initShop();
+  }
   if (screenName === 'miners') {
     renderMiners();
   }
@@ -3287,3 +3290,242 @@ function initBoostScreen() {
 
 // Initialize
 initApp();
+
+
+// ==================== SHOP & PAYMENT SYSTEM ====================
+const RAZORPAY_KEY = 'rzp_test_RlKJTiAezcD2TB';
+
+// Load user's mystery boxes
+async function loadUserBoxes() {
+  try {
+    const response = await fetch(`${API_URL}/payment/boxes/${userData.telegramId}`);
+    const data = await response.json();
+    if (data.success) {
+      userData.mysteryBoxes = data.boxes;
+      updateBoxCount();
+    }
+  } catch (err) {
+    console.error('Load boxes error:', err);
+  }
+}
+
+// Update box count display
+function updateBoxCount() {
+  const countEl = document.getElementById('userBoxCount');
+  if (countEl) {
+    countEl.textContent = userData.mysteryBoxes || 0;
+  }
+  
+  const openBtn = document.getElementById('openBoxBtn');
+  if (openBtn) {
+    openBtn.disabled = !userData.mysteryBoxes || userData.mysteryBoxes < 1;
+    openBtn.textContent = userData.mysteryBoxes > 0 ? '🎰 Open Box' : '📦 No Boxes';
+  }
+}
+
+// Buy product with Razorpay
+async function buyProduct(productId) {
+  try {
+    showNotification('🔄 Creating order...');
+    
+    // Create order on server
+    const response = await fetch(`${API_URL}/payment/create-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegramId: userData.telegramId,
+        productId: productId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      showNotification('❌ ' + (data.message || 'Failed to create order'));
+      return;
+    }
+    
+    // Open Razorpay checkout
+    const options = {
+      key: RAZORPAY_KEY,
+      amount: data.order.amount,
+      currency: data.order.currency,
+      name: 'Banana Billion',
+      description: data.product.description,
+      order_id: data.order.id,
+      handler: async function(response) {
+        // Verify payment on server
+        await verifyPayment(response, userData.telegramId);
+      },
+      prefill: {
+        name: userData.username || userData.firstName,
+      },
+      theme: {
+        color: '#f7b32b'
+      },
+      modal: {
+        ondismiss: function() {
+          showNotification('❌ Payment cancelled');
+        }
+      }
+    };
+    
+    const rzp = new Razorpay(options);
+    rzp.open();
+    
+  } catch (err) {
+    console.error('Buy product error:', err);
+    showNotification('❌ Payment failed. Try again.');
+  }
+}
+
+// Verify payment
+async function verifyPayment(paymentResponse, telegramId) {
+  try {
+    showNotification('🔄 Verifying payment...');
+    
+    const response = await fetch(`${API_URL}/payment/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        telegramId: telegramId
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      userData.mysteryBoxes = data.boxes;
+      updateBoxCount();
+      showNotification('🎉 ' + data.message);
+      showPurchaseSuccess(data.boxes);
+    } else {
+      showNotification('❌ ' + (data.message || 'Payment verification failed'));
+    }
+  } catch (err) {
+    console.error('Verify payment error:', err);
+    showNotification('❌ Verification failed. Contact support.');
+  }
+}
+
+// Show purchase success animation
+function showPurchaseSuccess(boxes) {
+  const modal = document.createElement('div');
+  modal.className = 'purchase-success-modal';
+  modal.innerHTML = `
+    <div class="purchase-success-content">
+      <div class="success-icon">🎉</div>
+      <h2>Purchase Successful!</h2>
+      <p>You now have <strong>${boxes}</strong> Mystery Box(es)</p>
+      <button onclick="this.parentElement.parentElement.remove()">Open Shop</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// Open mystery box
+async function openMysteryBox() {
+  if (!userData.mysteryBoxes || userData.mysteryBoxes < 1) {
+    showNotification('❌ No mystery boxes! Buy some from the shop.');
+    return;
+  }
+  
+  try {
+    showNotification('🎰 Opening box...');
+    
+    const response = await fetch(`${API_URL}/payment/open-box`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramId: userData.telegramId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      userData.mysteryBoxes = data.remainingBoxes;
+      userData.coins += data.rewards.coins;
+      updateBoxCount();
+      updateBalanceDisplay();
+      
+      // Show rewards animation
+      showBoxRewards(data.rewards);
+    } else {
+      showNotification('❌ ' + (data.message || 'Failed to open box'));
+    }
+  } catch (err) {
+    console.error('Open box error:', err);
+    showNotification('❌ Error opening box');
+  }
+}
+
+// Show box rewards animation
+function showBoxRewards(rewards) {
+  const modal = document.createElement('div');
+  modal.className = 'box-rewards-modal';
+  modal.innerHTML = `
+    <div class="box-rewards-content">
+      <div class="box-opening-animation">
+        <div class="box-icon">📦</div>
+        <div class="box-glow"></div>
+      </div>
+      <h2>🎉 Mystery Box Opened!</h2>
+      
+      <div class="rewards-list">
+        <div class="reward-item coins">
+          <span class="reward-icon">💰</span>
+          <span class="reward-value">+${formatNumber(rewards.coins)} Coins</span>
+        </div>
+        
+        <div class="reward-item booster">
+          <span class="reward-icon">⚡</span>
+          <span class="reward-value">${rewards.booster.name}</span>
+        </div>
+        
+        <div class="reward-item extra">
+          <span class="reward-icon">${rewards.extras.type === 'energy_refill' ? '🔋' : '⭐'}</span>
+          <span class="reward-value">${rewards.extras.name}</span>
+        </div>
+      </div>
+      
+      <button class="claim-rewards-btn" onclick="this.parentElement.parentElement.remove()">
+        ✨ Awesome!
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // Add confetti
+  createConfetti();
+}
+
+// Create confetti effect
+function createConfetti() {
+  const colors = ['#f7b32b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'];
+  const emojis = ['🍌', '💰', '⭐', '✨', '🎉'];
+  
+  for (let i = 0; i < 30; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    confetti.style.cssText = `
+      position: fixed;
+      top: -20px;
+      left: ${Math.random() * 100}vw;
+      font-size: ${15 + Math.random() * 15}px;
+      animation: confettiFall ${2 + Math.random() * 2}s linear forwards;
+      z-index: 10001;
+    `;
+    document.body.appendChild(confetti);
+    setTimeout(() => confetti.remove(), 4000);
+  }
+}
+
+// Initialize shop when navigating
+function initShop() {
+  loadUserBoxes();
+  const shopBalanceEl = document.getElementById('shopBalance');
+  if (shopBalanceEl) shopBalanceEl.textContent = formatNumber(userData.coins);
+}
