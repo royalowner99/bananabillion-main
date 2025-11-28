@@ -51,10 +51,17 @@ body {
   display: none;
   flex-direction: column;
   background: var(--gradient-dark);
+  padding-bottom: 90px; /* Space for fixed navbar */
+  overflow-y: auto;
 }
 
 .screen.active {
   display: flex;
+}
+
+/* Game screen doesn't need extra padding */
+#game {
+  padding-bottom: 90px;
 }
 
 /* ==================== LOADING SCREEN ==================== */
@@ -525,10 +532,16 @@ body {
 .bottom-nav {
   display: flex;
   justify-content: space-around;
-  padding: 10px 15px 20px;
-  background: rgba(26, 31, 46, 0.95);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(247, 179, 43, 0.1);
+  padding: 10px 15px 25px;
+  background: rgba(26, 31, 46, 0.98);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(247, 179, 43, 0.2);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
 }
 
 .nav-item {
