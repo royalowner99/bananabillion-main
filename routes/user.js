@@ -42,7 +42,7 @@ router.post('/init', async (req, res) => {
         lastActive: new Date().toISOString()
       };
 
-      // Add referral bonus
+      // Add referral bonus - both referrer and new user get coins
       if (referredBy) {
         const referrerQuery = await db.collection('users')
           .where('referralCode', '==', referredBy)
@@ -51,10 +51,24 @@ router.post('/init', async (req, res) => {
         
         if (!referrerQuery.empty) {
           const referrerDoc = referrerQuery.docs[0];
-          await referrerDoc.ref.update({
-            referrals: [...referrerDoc.data().referrals, telegramId],
-            coins: referrerDoc.data().coins + 1000
-          });
+          const referrerData = referrerDoc.data();
+          
+          // Make sure not self-referral
+          if (referrerData.telegramId !== telegramId) {
+            // Give referrer 2500 coins
+            const referrerReferrals = referrerData.referrals || [];
+            if (!referrerReferrals.includes(telegramId)) {
+              await referrerDoc.ref.update({
+                referrals: [...referrerReferrals, telegramId],
+                coins: (referrerData.coins || 0) + 2500
+              });
+              console.log(`🎁 Referral bonus: ${referrerData.username} got 2500 coins for inviting ${username}`);
+              
+              // Give new user bonus coins too
+              newUser.coins = 2000; // 1000 base + 1000 referral bonus
+              newUser.referredBy = referredBy;
+            }
+          }
         }
       }
 
@@ -102,6 +116,45 @@ router.get('/leaderboard/top', async (req, res) => {
     }));
     
     res.json({ success: true, leaderboard });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get referral stats
+router.get('/referrals/:telegramId', async (req, res) => {
+  try {
+    const userDoc = await db.collection('users').doc(req.params.telegramId).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    const referrals = userData.referrals || [];
+    
+    // Get referral details
+    const referralDetails = [];
+    for (const refId of referrals.slice(0, 50)) { // Limit to 50
+      const refDoc = await db.collection('users').doc(refId).get();
+      if (refDoc.exists) {
+        const refData = refDoc.data();
+        referralDetails.push({
+          username: refData.username,
+          firstName: refData.firstName,
+          joinedAt: refData.createdAt,
+          level: refData.level || 1
+        });
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      referralCode: userData.referralCode,
+      totalReferrals: referrals.length,
+      totalEarnings: referrals.length * 2500,
+      referrals: referralDetails
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

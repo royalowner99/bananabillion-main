@@ -78,12 +78,29 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const username = msg.from.username || msg.from.first_name;
-  const referralCode = match[1] ? match[1].trim() : null;
+  const referralCode = match[1] ? match[1].trim().replace(/\s+/g, '') : null;
   
-  console.log(`📨 /start command from user ${userId} (${username})`);
+  console.log(`📨 /start command from user ${userId} (${username}), referral: ${referralCode}`);
   
   // For local testing, use localhost. For production, use your deployed URL
-  const webAppUrl = process.env.WEBAPP_URL || `http://localhost:${PORT}`;
+  const baseUrl = process.env.WEBAPP_URL || `http://localhost:${PORT}`;
+  // Pass referral code to webapp via URL parameter
+  const webAppUrl = referralCode ? `${baseUrl}?ref=${referralCode}` : baseUrl;
+  
+  // If user came from referral, save it to database
+  if (referralCode) {
+    try {
+      const userRef = db.collection('users').doc(userId.toString());
+      const userDoc = await userRef.get();
+      
+      if (!userDoc.exists) {
+        // New user with referral - will be created when they open the app
+        console.log(`🎁 New user ${userId} referred by ${referralCode}`);
+      }
+    } catch (err) {
+      console.error('Referral check error:', err.message);
+    }
+  }
   
   const welcomeMessage = `🍌 Welcome to Banana Billion! 🍌
 
@@ -91,9 +108,9 @@ Tap the banana to earn coins!
 
 👤 Username: @${username}
 🆔 User ID: ${userId}
-${referralCode ? `🎁 Referral Code: ${referralCode}` : ''}
+${referralCode ? `🎁 Invited by: ${referralCode}\n✨ You'll get 1,000 bonus coins!` : ''}
 
-Click "Play Game" below to start!`;
+Click "Play Game" below to start mining!`;
   
   bot.sendMessage(chatId, welcomeMessage, {
     reply_markup: {

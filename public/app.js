@@ -97,6 +97,14 @@ async function initApp() {
   try {
     let user;
     
+    // Get referral code from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const referralCode = urlParams.get('ref') || urlParams.get('start') || null;
+    
+    if (referralCode) {
+      console.log('🎁 Referral code detected:', referralCode);
+    }
+    
     if (isDevelopment) {
       console.log('🔧 Development mode - using test user');
       user = {
@@ -112,13 +120,16 @@ async function initApp() {
       user = initData.user;
       telegramUser = user;
       
+      // Also check start_param from Telegram
+      const startParam = initData.start_param || referralCode;
+      
       if (!user) {
         showError('Please open this app from Telegram');
         return;
       }
     }
 
-    // Initialize user
+    // Initialize user with referral code
     const response = await fetch(`${API_URL}/user/init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -127,7 +138,8 @@ async function initApp() {
         username: user.username || user.first_name,
         firstName: user.first_name,
         lastName: user.last_name || '',
-        photoUrl: user.photo_url || null
+        photoUrl: user.photo_url || null,
+        referredBy: referralCode || tg?.initDataUnsafe?.start_param || null
       })
     });
 
