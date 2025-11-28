@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🍌 Banana Billion - Mining Empire</title>
+  <title>Banana Billion - Mining Empire</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍌</text></svg>">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Monetag Rewarded Popup Ad SDK -->
   <script src="//libtl.com/sdk.js" data-zone="10246329" data-sdk="show_10246329"></script>
-  <!-- Razorpay SDK -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-    // Check if Monetag SDK loaded
     window.addEventListener('load', function() {
       setTimeout(function() {
         if (typeof window.show_10246329 === 'function') {
-          console.log('✅ Monetag SDK loaded successfully');
+          console.log('Monetag SDK loaded successfully');
         } else {
-          console.log('⚠️ Monetag SDK not loaded - ads may not work');
+          console.log('Monetag SDK not loaded - ads may not work');
         }
       }, 2000);
     });
@@ -93,13 +90,21 @@
         </div>
       </div>
 
+      <!-- Shop Quick Access Card -->
+      <div class="shop-quick-card" onclick="switchScreen('shop')">
+        <div class="shop-quick-glow"></div>
+        <div class="shop-quick-icon">🛒</div>
+        <div class="shop-quick-info">
+          <span class="shop-quick-title">Mystery Shop</span>
+          <span class="shop-quick-desc">Get premium boxes and rewards!</span>
+        </div>
+        <div class="shop-quick-arrow">→</div>
+      </div>
+
       <!-- Main Mining Area -->
       <div class="mining-area">
         <div class="mining-container">
-          <!-- Particle effects container -->
           <div class="particles" id="particles"></div>
-          
-          <!-- Mining button -->
           <button id="mineButton" class="mine-button">
             <div class="mine-glow"></div>
             <div class="mine-ring ring-1"></div>
@@ -108,8 +113,6 @@
             <div class="mine-icon">🍌</div>
             <div class="mine-label">TAP TO MINE</div>
           </button>
-          
-          <!-- Floating rewards -->
           <div id="floatingRewards"></div>
         </div>
 
@@ -136,6 +139,10 @@
           <span class="nav-label">Mine</span>
           <div class="nav-indicator"></div>
         </button>
+        <button class="nav-item" data-screen="miners">
+          <div class="nav-icon">🤖</div>
+          <span class="nav-label">Miners</span>
+        </button>
         <button class="nav-item" data-screen="boost">
           <div class="nav-icon">🚀</div>
           <span class="nav-label">Boost</span>
@@ -146,9 +153,9 @@
           <span class="nav-label">Tasks</span>
           <div class="nav-badge" id="taskBadge">8</div>
         </button>
-        <button class="nav-item" data-screen="shop">
-          <div class="nav-icon">🛒</div>
-          <span class="nav-label">Shop</span>
+        <button class="nav-item" data-screen="friends">
+          <div class="nav-icon">👥</div>
+          <span class="nav-label">Friends</span>
         </button>
         <button class="nav-item" data-screen="leaderboard">
           <div class="nav-icon">🏆</div>
@@ -167,9 +174,7 @@
           <span id="profileBalance">0</span>
         </div>
       </div>
-      
       <div class="profile-container">
-        <!-- Profile Card -->
         <div class="profile-card">
           <div class="profile-avatar-container">
             <div class="profile-avatar" id="profileAvatar">
@@ -185,8 +190,6 @@
           <p class="profile-username">@<span id="profileUsername">username</span></p>
           <div class="profile-id">ID: <span id="profileId">000000000</span></div>
         </div>
-
-        <!-- Stats Grid -->
         <div class="profile-stats-grid">
           <div class="profile-stat-card">
             <div class="profile-stat-icon">🍌</div>
@@ -209,8 +212,6 @@
             <div class="profile-stat-label">Referrals</div>
           </div>
         </div>
-
-        <!-- Achievements -->
         <div class="profile-section">
           <h3 class="section-title">🏆 Achievements</h3>
           <div class="achievements-grid" id="achievementsList">
@@ -240,8 +241,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Account Info -->
         <div class="profile-section">
           <h3 class="section-title">📊 Account Info</h3>
           <div class="account-info-list">
@@ -263,8 +262,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Social Links -->
         <div class="profile-section">
           <h3 class="section-title">🔗 Connect</h3>
           <div class="social-buttons">
@@ -292,9 +289,7 @@
           <span id="boostBalance">0</span>
         </div>
       </div>
-      
       <div class="boost-container">
-        <!-- Daily Free Boosters -->
         <div class="boost-section">
           <h3 class="boost-section-title">Your daily boosters:</h3>
           <div class="daily-boosters-grid">
@@ -314,13 +309,9 @@
             </div>
           </div>
         </div>
-        
-        <!-- Purchasable Boosters -->
         <div class="boost-section">
           <h3 class="boost-section-title">Boosters:</h3>
-          <div class="boosters-list" id="boostersList">
-            <!-- Boosters loaded dynamically -->
-          </div>
+          <div class="boosters-list" id="boostersList"></div>
         </div>
       </div>
     </div>
@@ -335,10 +326,7 @@
           <span id="minersBalance">0</span>
         </div>
       </div>
-      
-      <div class="miners-container" id="minersList">
-        <!-- Miners will be loaded here -->
-      </div>
+      <div class="miners-container" id="minersList"></div>
     </div>
 
     <!-- Tasks Screen -->
@@ -351,57 +339,27 @@
           <span id="tasksBalance">0</span>
         </div>
       </div>
-      
       <div class="tasks-tabs">
-        <button class="tab-btn active" data-tab="special">
-          Special
-          <div class="tab-dot" id="specialDot"></div>
-        </button>
-        <button class="tab-btn" data-tab="leagues">
-          Leagues
-          <div class="tab-dot" id="leaguesDot"></div>
-        </button>
-        <button class="tab-btn" data-tab="referral">
-          Ref
-        </button>
-        <button class="tab-btn" data-tab="premium">
-          Premium
-        </button>
+        <button class="tab-btn active" data-tab="special">Special<div class="tab-dot" id="specialDot"></div></button>
+        <button class="tab-btn" data-tab="leagues">Leagues<div class="tab-dot" id="leaguesDot"></div></button>
+        <button class="tab-btn" data-tab="referral">Ref</button>
+        <button class="tab-btn" data-tab="premium">Premium</button>
       </div>
-      
-      <!-- Special Tasks -->
-      <div class="tasks-container task-tab-content active" id="specialTasks">
-        <!-- Special tasks loaded dynamically -->
-      </div>
-      
-      <!-- Leagues Tasks -->
+      <div class="tasks-container task-tab-content active" id="specialTasks"></div>
       <div class="tasks-container task-tab-content" id="leaguesTasks">
-        <div class="leagues-list" id="leaguesList">
-          <!-- Leagues loaded dynamically -->
-        </div>
+        <div class="leagues-list" id="leaguesList"></div>
       </div>
-      
-      <!-- Referral Tasks -->
       <div class="tasks-container task-tab-content" id="referralTasks">
-        <div class="ref-tasks-list" id="refTasksList">
-          <!-- Referral tasks loaded dynamically -->
-        </div>
+        <div class="ref-tasks-list" id="refTasksList"></div>
       </div>
-      
-      <!-- Premium Tasks (Watch Ads) -->
       <div class="tasks-container task-tab-content" id="premiumTasks">
         <div class="premium-header">
           <div class="premium-icon">💎</div>
           <h3>Premium Rewards</h3>
           <p>Watch ads to earn bonus coins!</p>
-          <div class="premium-counter">
-            <span id="adsWatched">0</span>/5 ads today
-          </div>
+          <div class="premium-counter"><span id="adsWatched">0</span>/5 ads today</div>
         </div>
-        
-        <div class="premium-tasks-list" id="premiumTasksList">
-          <!-- Premium tasks loaded dynamically -->
-        </div>
+        <div class="premium-tasks-list" id="premiumTasksList"></div>
       </div>
     </div>
 
@@ -415,7 +373,6 @@
           <span id="friendsBalance">0</span>
         </div>
       </div>
-      
       <div class="friends-container">
         <div class="referral-card">
           <div class="referral-header">
@@ -430,15 +387,10 @@
             <span class="referral-code" id="referralCode">LOADING</span>
           </div>
           <div class="referral-actions">
-            <button class="btn-primary" id="copyLinkBtn">
-              <span>📋</span> Copy Link
-            </button>
-            <button class="btn-secondary" id="shareLinkBtn">
-              <span>📤</span> Share
-            </button>
+            <button class="btn-primary" id="copyLinkBtn"><span>📋</span> Copy Link</button>
+            <button class="btn-secondary" id="shareLinkBtn"><span>📤</span> Share</button>
           </div>
         </div>
-        
         <div class="referral-stats">
           <div class="ref-stat">
             <span class="ref-stat-value" id="totalReferrals">0</span>
@@ -449,7 +401,6 @@
             <span class="ref-stat-label">Coins Earned</span>
           </div>
         </div>
-        
         <div class="referrals-list">
           <h3>Your Referrals</h3>
           <div id="referralsList"></div>
@@ -467,15 +418,11 @@
           <span id="leaderboardBalance">0</span>
         </div>
       </div>
-      
       <div class="leaderboard-tabs">
         <button class="tab-btn active" data-lb="coins">💰 Richest</button>
         <button class="tab-btn" data-lb="miners">⛏️ Top Miners</button>
       </div>
-      
-      <div class="leaderboard-container" id="leaderboardList">
-        <!-- Leaderboard will be loaded here -->
-      </div>
+      <div class="leaderboard-container" id="leaderboardList"></div>
     </div>
 
     <!-- Shop Screen -->
@@ -488,42 +435,110 @@
           <span id="shopBalance">0</span>
         </div>
       </div>
-      
       <div class="shop-content">
-        <!-- Mystery Boxes Section -->
+        <!-- Banana Pass Section -->
+        <div class="shop-section banana-pass-section" id="bananaPassSection">
+          <div class="banana-pass-card" onclick="buyProduct('banana_pass')">
+            <div class="pass-glow"></div>
+            <div class="pass-badge">LIFETIME</div>
+            <div class="pass-header">
+              <span class="pass-icon">🍌👑</span>
+              <div class="pass-title">
+                <h3>Banana Pass</h3>
+                <p>One-time premium upgrade</p>
+              </div>
+            </div>
+            <div class="pass-benefits">
+              <div class="pass-benefit"><span>⚡</span> +20% Mining Power</div>
+              <div class="pass-benefit"><span>🎭</span> Special Emoji Badge</div>
+              <div class="pass-benefit"><span>🚀</span> Daily 2x Booster</div>
+              <div class="pass-benefit"><span>👑</span> Exclusive Banana Badge</div>
+            </div>
+            <div class="pass-price">
+              <span class="pass-amount">₹299</span>
+              <span class="pass-label">lifetime access</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Banana Pass Owned Section (hidden by default) -->
+        <div class="shop-section banana-pass-owned hidden" id="bananaPassOwned">
+          <div class="pass-owned-card">
+            <div class="pass-owned-badge">�👑 PA>SS ACTIVE</div>
+            <p>You have Banana Pass! Enjoy +20% mining bonus.</p>
+            <button class="claim-booster-btn" id="claimPassBooster" onclick="claimPassBooster()">
+              🚀 Claim Daily 2x Booster
+            </button>
+          </div>
+        </div>
+
+        <!-- Profile Customization -->
+        <div class="shop-section">
+          <h3 class="shop-section-title">🎨 Profile Customization</h3>
+          <p class="shop-section-desc">Stand out with unique cosmetics!</p>
+          <div class="cosmetics-grid">
+            <div class="cosmetic-card" id="cosmetic_colored_frame" onclick="buyProduct('colored_frame')">
+              <div class="cosmetic-preview colored-frame-preview">
+                <div class="frame-demo"></div>
+              </div>
+              <div class="cosmetic-info">
+                <span class="cosmetic-name">Colored Frame</span>
+                <span class="cosmetic-price">₹29</span>
+              </div>
+              <div class="cosmetic-status"></div>
+            </div>
+            <div class="cosmetic-card" id="cosmetic_premium_banner" onclick="buyProduct('premium_banner')">
+              <div class="cosmetic-preview banner-preview">
+                <div class="banner-demo"></div>
+              </div>
+              <div class="cosmetic-info">
+                <span class="cosmetic-name">Premium Banner</span>
+                <span class="cosmetic-price">₹49</span>
+              </div>
+              <div class="cosmetic-status"></div>
+            </div>
+            <div class="cosmetic-card" id="cosmetic_animated_frame" onclick="buyProduct('animated_frame')">
+              <div class="cosmetic-preview animated-frame-preview">
+                <div class="animated-demo"></div>
+              </div>
+              <div class="cosmetic-info">
+                <span class="cosmetic-name">Animated Frame</span>
+                <span class="cosmetic-price">₹99</span>
+              </div>
+              <div class="cosmetic-status"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mystery Boxes -->
         <div class="shop-section">
           <h3 class="shop-section-title">🎁 Mystery Boxes</h3>
           <p class="shop-section-desc">Open boxes to win amazing rewards!</p>
-          
           <div class="my-boxes-card">
             <div class="boxes-icon">📦</div>
             <div class="boxes-info">
               <span class="boxes-label">Your Boxes</span>
               <span class="boxes-count" id="userBoxCount">0</span>
             </div>
-            <button class="open-box-btn" id="openBoxBtn" onclick="openMysteryBox()">
-              🎰 Open Box
-            </button>
+            <button class="open-box-btn" id="openBoxBtn" onclick="openMysteryBox()">🎰 Open Box</button>
           </div>
         </div>
-        
-        <!-- Buy Boxes Section -->
+
+        <!-- Buy Boxes -->
         <div class="shop-section">
           <h3 class="shop-section-title">💎 Premium Boxes</h3>
-          
           <div class="product-card" onclick="buyProduct('mystery_box_single')">
             <div class="product-badge">POPULAR</div>
             <div class="product-icon">🎁</div>
             <div class="product-info">
               <div class="product-name">Mystery Box</div>
-              <div class="product-desc">10K-50K coins, boosters & more!</div>
+              <div class="product-desc">10K-50K coins, boosters and more!</div>
             </div>
             <div class="product-price">
               <span class="price-amount">₹49</span>
               <span class="price-label">per box</span>
             </div>
           </div>
-          
           <div class="product-card bundle" onclick="buyProduct('mystery_box_bundle')">
             <div class="product-badge save">SAVE 20%</div>
             <div class="product-icon">🎁🎁🎁</div>
@@ -537,38 +552,13 @@
             </div>
           </div>
         </div>
-        
-        <!-- Box Contents -->
-        <div class="shop-section">
-          <h3 class="shop-section-title">📋 Box Contents</h3>
-          <div class="box-contents">
-            <div class="content-item">
-              <span class="content-icon">💰</span>
-              <span class="content-text">10,000 - 50,000 Coins</span>
-            </div>
-            <div class="content-item">
-              <span class="content-icon">⚡</span>
-              <span class="content-text">3x or 5x Tap Booster</span>
-            </div>
-            <div class="content-item">
-              <span class="content-icon">🔋</span>
-              <span class="content-text">Full Energy Refill</span>
-            </div>
-            <div class="content-item">
-              <span class="content-icon">⭐</span>
-              <span class="content-text">Rare Miner Boost</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
     <!-- Daily Reward Modal -->
     <div id="dailyModal" class="modal">
       <div class="modal-content">
-        <div class="modal-header">
-          <h2>🎁 Daily Reward</h2>
-        </div>
+        <div class="modal-header"><h2>🎁 Daily Reward</h2></div>
         <div class="modal-body">
           <div class="daily-streak">
             <span class="streak-label">Day Streak</span>

@@ -191,6 +191,8 @@ body {
   justify-content: center;
   font-size: 24px;
   box-shadow: var(--shadow-glow);
+  position: relative;
+  overflow: visible;
 }
 
 .user-details {
@@ -599,6 +601,102 @@ body {
   border-radius: 10px;
   min-width: 18px;
   text-align: center;
+}
+
+/* Shop Quick Access Card */
+.shop-quick-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 20px 10px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(247, 179, 43, 0.15) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border: 1px solid rgba(247, 179, 43, 0.3);
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.shop-quick-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(247, 179, 43, 0.5);
+  box-shadow: 0 8px 25px rgba(247, 179, 43, 0.2);
+}
+
+.shop-quick-card:active {
+  transform: scale(0.98);
+}
+
+.shop-quick-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(247, 179, 43, 0.1) 0%, transparent 50%);
+  animation: shopGlowRotate 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shopGlowRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.shop-quick-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 15px rgba(247, 179, 43, 0.3);
+  position: relative;
+  z-index: 1;
+  animation: shopIconPulse 2s ease-in-out infinite;
+}
+
+@keyframes shopIconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.shop-quick-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+.shop-quick-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.shop-quick-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.shop-quick-arrow {
+  font-size: 20px;
+  color: var(--accent-primary);
+  position: relative;
+  z-index: 1;
+  animation: arrowBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
 }
 
 
@@ -4806,4 +4904,454 @@ body {
     transform: translateY(100vh) rotate(720deg);
     opacity: 0;
   }
+}
+
+
+/* ==================== BANANA PASS & COSMETICS ==================== */
+.banana-pass-card {
+  background: linear-gradient(135deg, rgba(247, 179, 43, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+  border: 2px solid rgba(247, 179, 43, 0.4);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.banana-pass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 40px rgba(247, 179, 43, 0.3);
+  border-color: rgba(247, 179, 43, 0.6);
+}
+
+.pass-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(247, 179, 43, 0.15) 0%, transparent 50%);
+  animation: passGlowRotate 10s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes passGlowRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.pass-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #f7b32b 0%, #ffd700 100%);
+  color: #000;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+.pass-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.pass-icon {
+  font-size: 48px;
+  animation: passIconFloat 3s ease-in-out infinite;
+}
+
+@keyframes passIconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.pass-title h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-bottom: 4px;
+}
+
+.pass-title p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.pass-benefits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.pass-benefit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.pass-benefit span {
+  font-size: 16px;
+}
+
+.pass-price {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.pass-amount {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--success);
+  display: block;
+}
+
+.pass-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Pass Owned State */
+.pass-owned-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.pass-owned-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--success);
+  margin-bottom: 8px;
+}
+
+.pass-owned-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.claim-booster-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.claim-booster-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+
+.claim-booster-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Cosmetics Grid */
+.cosmetics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.cosmetic-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.cosmetic-card:hover {
+  border-color: rgba(247, 179, 43, 0.5);
+  transform: translateY(-2px);
+}
+
+.cosmetic-card.owned {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, var(--bg-card) 100%);
+}
+
+.cosmetic-card.equipped {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 20px rgba(247, 179, 43, 0.3);
+}
+
+.cosmetic-preview {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.colored-frame-preview {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6);
+  padding: 4px;
+}
+
+.colored-frame-preview .frame-demo {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+
+.banner-preview {
+  background: linear-gradient(135deg, #f7b32b 0%, #ec4899 50%, #8b5cf6 100%);
+  border-radius: 12px;
+}
+
+.animated-frame-preview {
+  background: conic-gradient(from 0deg, #f7b32b, #ec4899, #8b5cf6, #3b82f6, #10b981, #f7b32b);
+  padding: 4px;
+  animation: frameRotate 3s linear infinite;
+}
+
+@keyframes frameRotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.animated-frame-preview .animated-demo {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+
+.cosmetic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cosmetic-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cosmetic-price {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.cosmetic-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 14px;
+}
+
+.cosmetic-card.owned .cosmetic-status::after {
+  content: '✓';
+  color: var(--success);
+}
+
+.cosmetic-card.equipped .cosmetic-status::after {
+  content: '⭐';
+}
+
+.cosmetic-card.owned .cosmetic-price {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  font-size: 12px;
+}
+
+
+/* Avatar Cosmetic Effects */
+.avatar.colored-frame {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6) !important;
+  padding: 3px;
+}
+
+.avatar.colored-frame span {
+  background: var(--bg-card);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.avatar.animated-frame {
+  background: conic-gradient(from 0deg, #f7b32b, #ec4899, #8b5cf6, #3b82f6, #10b981, #f7b32b) !important;
+  padding: 3px;
+  animation: avatarFrameRotate 3s linear infinite;
+}
+
+@keyframes avatarFrameRotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.avatar.premium-banner::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  background: linear-gradient(135deg, #f7b32b 0%, #ec4899 50%, #8b5cf6 100%);
+  border-radius: 16px;
+  z-index: -1;
+  animation: bannerGlow 2s ease-in-out infinite;
+}
+
+@keyframes bannerGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.banana-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  font-size: 14px;
+  background: linear-gradient(135deg, #f7b32b 0%, #ffd700 100%);
+  border-radius: 50%;
+  padding: 4px;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 2px 8px rgba(247, 179, 43, 0.5);
+  z-index: 10;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+
+
+/* Profile Avatar Cosmetics */
+.profile-avatar-container.colored-frame .profile-avatar {
+  background: linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6) !important;
+  padding: 4px;
+}
+
+.profile-avatar-container.animated-frame .profile-level-ring {
+  border-color: transparent;
+  background: conic-gradient(from 0deg, #f7b32b, #ec4899, #8b5cf6, #3b82f6, #10b981, #f7b32b);
+  animation: profileFrameRotate 3s linear infinite;
+}
+
+@keyframes profileFrameRotate {
+  0% { filter: hue-rotate(0deg); transform: rotate(0deg); }
+  100% { filter: hue-rotate(360deg); transform: rotate(360deg); }
+}
+
+/* Fixed Bottom Navigation */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 10px 20px;
+  background: rgba(26, 31, 46, 0.98);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(247, 179, 43, 0.2);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: all 0.3s;
+  position: relative;
+  min-width: 50px;
+}
+
+.nav-item.active {
+  color: var(--accent-primary);
+  background: rgba(247, 179, 43, 0.1);
+}
+
+.nav-icon {
+  font-size: 20px;
+}
+
+.nav-label {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.nav-indicator {
+  position: absolute;
+  bottom: 0;
+  width: 16px;
+  height: 2px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  display: none;
+}
+
+.nav-item.active .nav-indicator {
+  display: block;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -2px;
+  right: 2px;
+  background: var(--danger);
+  color: white;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 8px;
+  min-width: 14px;
+  text-align: center;
+}
+
+.boost-badge {
+  background: var(--success);
+  font-size: 7px;
 }

@@ -160,7 +160,15 @@ async function initApp() {
       // Re-apply booster effects on load
       recalculateBoosterEffects();
       
-      console.log('User loaded:', userData.username, 'Coins:', userData.coins, 'TapPower:', userData.tapPower, 'Boosters:', userData.boosters);
+      // Load Banana Pass and inventory data
+      userData.bananaPass = data.user.bananaPass || false;
+      userData.miningBonus = data.user.miningBonus || 0;
+      userData.mysteryBoxes = data.user.mysteryBoxes || 0;
+      userData.ownedCosmetics = data.user.ownedCosmetics || [];
+      userData.activeCosmetic = data.user.activeCosmetic || null;
+      userData.specialEmoji = data.user.specialEmoji || null;
+      
+      console.log('User loaded:', userData.username, 'Coins:', userData.coins, 'TapPower:', userData.tapPower, 'BananaPass:', userData.bananaPass);
       
       // Load daily booster data on init
       loadDailyBoosterData();
@@ -172,6 +180,11 @@ async function initApp() {
       startPassiveIncome();
       checkDailyReward();
       updateBoostBadge();
+      
+      // Apply cosmetics and Banana Pass badge
+      if (userData.activeCosmetic || userData.bananaPass) {
+        applyCosmetics();
+      }
       
       // Hide loading, show game
       setTimeout(() => {
@@ -217,9 +230,13 @@ function updateAllUI() {
   // Update boost badge
   updateBoostBadge();
   
-  // Update mining stats
+  // Update mining stats - show with Banana Pass bonus if active
+  let displayPower = userData.tapPower || 1;
+  if (userData.bananaPass && userData.miningBonus) {
+    displayPower = Math.floor(displayPower * (1 + userData.miningBonus / 100));
+  }
   const miningPowerEl = document.getElementById('miningPower');
-  if (miningPowerEl) miningPowerEl.textContent = formatNumber(userData.tapPower || 1);
+  if (miningPowerEl) miningPowerEl.textContent = formatNumber(displayPower);
   
   const perHourEl = document.getElementById('perHour');
   if (perHourEl) perHourEl.textContent = formatNumber(calculatePerHour());
@@ -295,8 +312,14 @@ document.getElementById('mineButton').addEventListener('click', async (e) => {
   button.style.transform = 'scale(0.95)';
   setTimeout(() => button.style.transform = '', 100);
   
+  // Calculate tap power with Banana Pass bonus
+  let displayTapPower = Math.floor(Number(userData.tapPower) || 1);
+  if (userData.bananaPass && userData.miningBonus) {
+    displayTapPower = Math.floor(displayTapPower * (1 + userData.miningBonus / 100));
+  }
+  
   // Create floating reward
-  createFloatingReward(userData.tapPower);
+  createFloatingReward(displayTapPower);
   
   // Create particles
   createParticles();
@@ -310,8 +333,11 @@ document.getElementById('mineButton').addEventListener('click', async (e) => {
     // Haptic not supported, ignore
   }
   
-  // Update UI immediately
-  const tapPower = Math.floor(Number(userData.tapPower) || 1);
+  // Update UI immediately - apply Banana Pass bonus if active
+  let tapPower = Math.floor(Number(userData.tapPower) || 1);
+  if (userData.bananaPass && userData.miningBonus) {
+    tapPower = Math.floor(tapPower * (1 + userData.miningBonus / 100));
+  }
   userData.coins = Math.floor(Number(userData.coins) || 0) + tapPower;
   userData.energy = Math.max(0, (Number(userData.energy) || 0) - 1);
   userData.totalTaps = Math.floor(Number(userData.totalTaps) || 0) + 1;
@@ -608,7 +634,7 @@ function startPassiveIncome() {
 // Update only balance displays (lightweight)
 function updateBalanceDisplay() {
   const coins = Math.floor(Number(userData.coins) || 0);
-  const balanceElements = ['coinBalance', 'minersBalance', 'tasksBalance', 'friendsBalance', 'profileBalance', 'leaderboardBalance'];
+  const balanceElements = ['coinBalance', 'minersBalance', 'tasksBalance', 'friendsBalance', 'profileBalance', 'leaderboardBalance', 'shopBalance', 'boostBalance'];
   balanceElements.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = formatNumber(coins);
@@ -3293,7 +3319,6 @@ initApp();
 
 
 // ==================== SHOP & PAYMENT SYSTEM ====================
-const RAZORPAY_KEY = 'rzp_test_RlKJTiAezcD2TB';
 
 // Load user's mystery boxes
 async function loadUserBoxes() {
@@ -3347,7 +3372,7 @@ async function buyProduct(productId) {
     
     // Open Razorpay checkout
     const options = {
-      key: RAZORPAY_KEY,
+      key: data.key,
       amount: data.order.amount,
       currency: data.order.currency,
       name: 'Banana Billion',
@@ -3398,10 +3423,24 @@ async function verifyPayment(paymentResponse, telegramId) {
     const data = await response.json();
     
     if (data.success) {
-      userData.mysteryBoxes = data.boxes;
-      updateBoxCount();
       showNotification('🎉 ' + data.message);
-      showPurchaseSuccess(data.boxes);
+      
+      // Handle different product types
+      if (data.boxes !== undefined) {
+        userData.mysteryBoxes = data.boxes;
+        updateBoxCount();
+        showPurchaseSuccess('boxes', data.boxes);
+      } else if (data.cosmetic) {
+        userData.ownedCosmetics = data.ownedCosmetics;
+        userData.activeCosmetic = data.cosmetic;
+        updateShopUI();
+        showPurchaseSuccess('cosmetic', data.cosmetic);
+      } else if (data.bananaPass) {
+        userData.bananaPass = true;
+        userData.miningBonus = 20;
+        updateShopUI();
+        showPurchaseSuccess('banana_pass');
+      }
     } else {
       showNotification('❌ ' + (data.message || 'Payment verification failed'));
     }
@@ -3412,18 +3451,46 @@ async function verifyPayment(paymentResponse, telegramId) {
 }
 
 // Show purchase success animation
-function showPurchaseSuccess(boxes) {
+function showPurchaseSuccess(type, value) {
   const modal = document.createElement('div');
   modal.className = 'purchase-success-modal';
-  modal.innerHTML = `
-    <div class="purchase-success-content">
+  
+  let content = '';
+  if (type === 'boxes') {
+    content = `
+      <div class="success-icon">🎁</div>
+      <h2>Purchase Successful!</h2>
+      <p>You now have <strong>${value}</strong> Mystery Box(es)</p>`;
+  } else if (type === 'cosmetic') {
+    const cosmeticNames = {
+      'colored_frame': 'Colored Frame',
+      'premium_banner': 'Premium Banner',
+      'animated_frame': 'Animated Frame'
+    };
+    content = `
+      <div class="success-icon">🎨</div>
+      <h2>Cosmetic Unlocked!</h2>
+      <p><strong>${cosmeticNames[value] || value}</strong> is now equipped!</p>`;
+  } else if (type === 'banana_pass') {
+    content = `
+      <div class="success-icon">🍌👑</div>
+      <h2>Banana Pass Activated!</h2>
+      <p>Enjoy +20% mining, special emoji, and daily 2x booster!</p>`;
+  } else {
+    content = `
       <div class="success-icon">🎉</div>
       <h2>Purchase Successful!</h2>
-      <p>You now have <strong>${boxes}</strong> Mystery Box(es)</p>
-      <button onclick="this.parentElement.parentElement.remove()">Open Shop</button>
+      <p>Thank you for your purchase!</p>`;
+  }
+  
+  modal.innerHTML = `
+    <div class="purchase-success-content">
+      ${content}
+      <button onclick="this.parentElement.parentElement.remove()">Continue</button>
     </div>
   `;
   document.body.appendChild(modal);
+  createConfetti();
 }
 
 // Open mystery box
@@ -3526,6 +3593,149 @@ function createConfetti() {
 // Initialize shop when navigating
 function initShop() {
   loadUserBoxes();
+  loadUserInventory();
   const shopBalanceEl = document.getElementById('shopBalance');
   if (shopBalanceEl) shopBalanceEl.textContent = formatNumber(userData.coins);
 }
+
+// Load user inventory (cosmetics, banana pass)
+async function loadUserInventory() {
+  try {
+    const response = await fetch(`${API_URL}/payment/inventory/${userData.telegramId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      userData.mysteryBoxes = data.mysteryBoxes;
+      userData.ownedCosmetics = data.ownedCosmetics || [];
+      userData.activeCosmetic = data.activeCosmetic;
+      userData.bananaPass = data.bananaPass;
+      userData.miningBonus = data.miningBonus || 0;
+      userData.specialEmoji = data.specialEmoji;
+      userData.badge = data.badge;
+      
+      updateShopUI();
+    }
+  } catch (err) {
+    console.error('Load inventory error:', err);
+  }
+}
+
+// Update shop UI based on owned items
+function updateShopUI() {
+  // Update Banana Pass section
+  const passSection = document.getElementById('bananaPassSection');
+  const passOwned = document.getElementById('bananaPassOwned');
+  
+  if (userData.bananaPass) {
+    if (passSection) passSection.classList.add('hidden');
+    if (passOwned) passOwned.classList.remove('hidden');
+  } else {
+    if (passSection) passSection.classList.remove('hidden');
+    if (passOwned) passOwned.classList.add('hidden');
+  }
+  
+  // Update cosmetics
+  const cosmetics = ['colored_frame', 'premium_banner', 'animated_frame'];
+  cosmetics.forEach(cosmetic => {
+    const card = document.getElementById(`cosmetic_${cosmetic}`);
+    if (card) {
+      card.classList.remove('owned', 'equipped');
+      if (userData.ownedCosmetics && userData.ownedCosmetics.includes(cosmetic)) {
+        card.classList.add('owned');
+        if (userData.activeCosmetic === cosmetic) {
+          card.classList.add('equipped');
+        }
+      }
+    }
+  });
+  
+  // Update box count
+  updateBoxCount();
+  
+  // Apply cosmetic effects to profile
+  applyCosmetics();
+}
+
+// Apply cosmetics to profile avatar
+function applyCosmetics() {
+  const avatar = document.querySelector('.avatar');
+  const profileAvatar = document.querySelector('.profile-avatar-container');
+  
+  if (!avatar) return;
+  
+  // Remove existing cosmetic classes
+  avatar.classList.remove('colored-frame', 'animated-frame', 'premium-banner');
+  if (profileAvatar) {
+    profileAvatar.classList.remove('colored-frame', 'animated-frame', 'premium-banner');
+  }
+  
+  // Apply active cosmetic
+  if (userData.activeCosmetic) {
+    avatar.classList.add(userData.activeCosmetic.replace('_', '-'));
+    if (profileAvatar) {
+      profileAvatar.classList.add(userData.activeCosmetic.replace('_', '-'));
+    }
+  }
+  
+  // Apply Banana Pass badge
+  const existingBadge = avatar.querySelector('.banana-badge');
+  if (userData.bananaPass) {
+    if (!existingBadge) {
+      const badge = document.createElement('span');
+      badge.className = 'banana-badge';
+      badge.textContent = '👑';
+      avatar.appendChild(badge);
+    }
+  } else {
+    // Remove badge if user doesn't have Banana Pass
+    if (existingBadge) {
+      existingBadge.remove();
+    }
+  }
+}
+
+// Claim daily Banana Pass booster
+async function claimPassBooster() {
+  if (!userData.bananaPass) {
+    showNotification('You need Banana Pass for this!');
+    return;
+  }
+  
+  try {
+    const btn = document.getElementById('claimPassBooster');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Claiming...';
+    }
+    
+    const response = await fetch(`${API_URL}/payment/claim-pass-booster`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramId: userData.telegramId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showNotification(data.message);
+      if (btn) btn.textContent = 'Claimed Today!';
+    } else {
+      showNotification(data.message || 'Already claimed today');
+      if (btn) {
+        btn.textContent = 'Already Claimed';
+        btn.disabled = true;
+      }
+    }
+  } catch (err) {
+    console.error('Claim booster error:', err);
+    showNotification('Error claiming booster');
+    const btn = document.getElementById('claimPassBooster');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Claim Daily 2x Booster';
+    }
+  }
+}
+
+// Make claimPassBooster available globally
+window.claimPassBooster = claimPassBooster;
