@@ -299,6 +299,107 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* ==================== QUICK ACCESS CARDS ==================== */
+.quick-access-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 12px 10px;
+  margin: 0;
+}
+
+.quick-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  min-height: 65px;
+}
+
+.quick-card:active {
+  transform: scale(0.95);
+}
+
+.quick-icon {
+  font-size: 22px;
+}
+
+.quick-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.quick-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--danger);
+  color: white;
+  font-size: 7px;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+/* Quick card color variants */
+.shop-card {
+  background: linear-gradient(135deg, rgba(247, 179, 43, 0.15) 0%, var(--bg-card) 100%);
+  border-color: rgba(247, 179, 43, 0.2);
+}
+
+.miners-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, var(--bg-card) 100%);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.wallet-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, var(--bg-card) 100%);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.leaderboard-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, var(--bg-card) 100%);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Mobile responsive for quick access */
+@media (max-width: 360px) {
+  .quick-access-row {
+    gap: 6px;
+    padding: 0 8px 8px;
+  }
+  
+  .quick-card {
+    padding: 8px 4px;
+    min-height: 58px;
+    border-radius: 10px;
+  }
+  
+  .quick-icon {
+    font-size: 18px;
+  }
+  
+  .quick-label {
+    font-size: 9px;
+  }
+  
+  .quick-badge {
+    font-size: 6px;
+    padding: 1px 3px;
+  }
+}
+
 /* ==================== MINING AREA ==================== */
 .mining-area {
   flex: 1;
