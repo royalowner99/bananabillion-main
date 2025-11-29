@@ -5411,3 +5411,29 @@ body {
   padding: 20px;
   font-size: 14px;
 }
+
+.no-referrals-box {
+  text-align: center;
+  padding: 30px 20px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.no-ref-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.no-referrals-box p {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.no-referrals-box span {
+  font-size: 13px;
+  color: var(--text-muted);
+}

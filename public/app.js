@@ -1012,6 +1012,10 @@ function switchScreen(screenName) {
 // Load referrals data
 async function loadReferrals() {
   try {
+    // Update balance display
+    const friendsBalanceEl = document.getElementById('friendsBalance');
+    if (friendsBalanceEl) friendsBalanceEl.textContent = formatNumber(userData.coins);
+    
     const response = await fetch(`${API_URL}/user/referrals/${userData.telegramId}`);
     const data = await response.json();
     
@@ -1031,24 +1035,48 @@ async function loadReferrals() {
       const listEl = document.getElementById('referralsList');
       if (listEl) {
         if (data.referrals && data.referrals.length > 0) {
-          listEl.innerHTML = data.referrals.map(ref => `
-            <div class="referral-item">
-              <div class="referral-avatar">👤</div>
-              <div class="referral-info">
-                <span class="referral-name">${ref.username || ref.firstName}</span>
-                <span class="referral-date">Lv.${ref.level || 1}</span>
+          listEl.innerHTML = data.referrals.map(ref => {
+            // Format join date
+            const joinDate = ref.joinedAt ? formatDate(ref.joinedAt) : 'Recently';
+            return `
+              <div class="referral-item">
+                <div class="referral-avatar">👤</div>
+                <div class="referral-info">
+                  <span class="referral-name">${ref.username || ref.firstName || 'User'}</span>
+                  <span class="referral-date">Lv.${ref.level || 1} • Joined ${joinDate}</span>
+                </div>
+                <div class="referral-bonus">+2,500 🍌</div>
               </div>
-              <div class="referral-bonus">+2,500 🍌</div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         } else {
-          listEl.innerHTML = '<p class="no-referrals">No referrals yet. Share your link!</p>';
+          listEl.innerHTML = `
+            <div class="no-referrals-box">
+              <div class="no-ref-icon">👥</div>
+              <p>No referrals yet</p>
+              <span>Share your link to earn 2,500 coins per friend!</span>
+            </div>
+          `;
         }
       }
     }
   } catch (err) {
     console.error('Load referrals error:', err);
   }
+}
+
+// Format date helper
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return date.toLocaleDateString();
 }
 
 // Show Notification - Always use custom toast (Telegram methods not supported in browser)
