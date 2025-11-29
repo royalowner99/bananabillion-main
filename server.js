@@ -82,6 +82,8 @@ bot.onText(/\/start\s*(.*)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const username = msg.from.username || msg.from.first_name;
+  const firstName = msg.from.first_name || 'Miner';
+  
   // Extract referral code - remove any whitespace
   const rawCode = match[1] ? match[1].trim() : null;
   const referralCode = rawCode && rawCode.length > 0 ? rawCode : null;
@@ -108,24 +110,67 @@ bot.onText(/\/start\s*(.*)/, async (msg, match) => {
     }
   }
   
-  const welcomeMessage = `🍌 Welcome to Banana Billion! 🍌
+  const welcomeMessage = `🍌 *Welcome to Banana Billion!* 🍌
 
-Tap the banana to earn coins!
+Hey *${firstName}*! Ready to become a crypto mining tycoon?
 
-👤 Username: @${username}
-🆔 User ID: ${userId}
-${referralCode ? `🎁 Invited by: ${referralCode}\n✨ You'll get 1,000 bonus coins!` : ''}
+━━━━━━━━━━━━━━━━━━━━
+🎮 *What is Banana Billion?*
+━━━━━━━━━━━━━━━━━━━━
 
-Click "Play Game" below to start mining!`;
+Banana Billion is a Tap-to-Earn crypto mining game where you can:
+
+⛏️ *Tap to Mine* - Earn $BANANA coins
+🤖 *Buy Miners* - Passive income 24/7
+🚀 *Use Boosters* - Multiply your earnings
+🎰 *Lucky Spins* - Win big rewards
+💰 *Withdraw* - Convert to real crypto (Coming Soon!)
+👥 *Invite Friends* - Earn 2,500 coins per referral
+
+━━━━━━━━━━━━━━━━━━━━
+💎 *$BANANA Token*
+━━━━━━━━━━━━━━━━━━━━
+
+• Network: BNB Smart Chain (BEP-20)
+• Airdrop: Coming Soon! 🪂
+• Keep mining to qualify!
+
+${referralCode ? `━━━━━━━━━━━━━━━━━━━━
+🎁 *Referral Bonus!*
+━━━━━━━━━━━━━━━━━━━━
+You were invited! Get *1,000 bonus coins* when you start playing!
+` : ''}
+👇 *Tap the button below to start mining!*`;
   
-  bot.sendMessage(chatId, welcomeMessage, {
+  // Send welcome image with message
+  bot.sendPhoto(chatId, 'https://i.ibb.co/4g8Xk8M/banana-billion-banner.png', {
+    caption: welcomeMessage,
+    parse_mode: 'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text: '🎮 Play Game', web_app: { url: webAppUrl } }],
-        [{ text: '📢 Join Channel', url: process.env.TELEGRAM_CHANNEL }],
-        [{ text: '👥 Join Group', url: process.env.TELEGRAM_GROUP }]
+        [{ text: '🎮 Play Now', web_app: { url: webAppUrl } }],
+        [
+          { text: '📢 Channel', url: process.env.TELEGRAM_CHANNEL },
+          { text: '👥 Community', url: process.env.TELEGRAM_GROUP }
+        ],
+        [{ text: '🐦 Twitter', url: process.env.TWITTER_HANDLE }]
       ]
     }
+  }).catch(() => {
+    // If image fails, send text only
+    bot.sendMessage(chatId, welcomeMessage, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🎮 Play Now', web_app: { url: webAppUrl } }],
+          [
+            { text: '📢 Channel', url: process.env.TELEGRAM_CHANNEL },
+            { text: '👥 Community', url: process.env.TELEGRAM_GROUP }
+          ],
+          [{ text: '🐦 Twitter', url: process.env.TWITTER_HANDLE }]
+        ]
+      }
+    });
   }).then(() => {
     console.log('✅ Welcome message sent successfully');
   }).catch(err => {
