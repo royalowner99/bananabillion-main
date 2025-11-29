@@ -90,15 +90,25 @@
         </div>
       </div>
 
-      <!-- Shop Quick Access Card -->
-      <div class="shop-quick-card" onclick="switchScreen('shop')">
-        <div class="shop-quick-glow"></div>
-        <div class="shop-quick-icon">🛒</div>
-        <div class="shop-quick-info">
-          <span class="shop-quick-title">Mystery Shop</span>
-          <span class="shop-quick-desc">Get premium boxes and rewards!</span>
+      <!-- Quick Access Cards -->
+      <div class="quick-access-row">
+        <div class="quick-card shop-card" onclick="switchScreen('shop')">
+          <span class="quick-icon">🛒</span>
+          <span class="quick-label">Shop</span>
         </div>
-        <div class="shop-quick-arrow">→</div>
+        <div class="quick-card miners-card" onclick="switchScreen('miners')">
+          <span class="quick-icon">🤖</span>
+          <span class="quick-label">Miners</span>
+        </div>
+        <div class="quick-card wallet-card" onclick="switchScreen('wallet')">
+          <span class="quick-icon">💰</span>
+          <span class="quick-label">Wallet</span>
+          <span class="quick-badge">NEW</span>
+        </div>
+        <div class="quick-card leaderboard-card" onclick="switchScreen('leaderboard')">
+          <span class="quick-icon">🏆</span>
+          <span class="quick-label">Top 100</span>
+        </div>
       </div>
 
       <!-- Main Mining Area -->
@@ -132,35 +142,46 @@
         </div>
       </div>
 
-      <!-- Bottom Navigation -->
-      <div class="bottom-nav">
-        <button class="nav-item active" data-screen="game">
-          <div class="nav-icon">⛏️</div>
-          <span class="nav-label">Mine</span>
-          <div class="nav-indicator"></div>
-        </button>
-        <button class="nav-item" data-screen="miners">
-          <div class="nav-icon">🤖</div>
-          <span class="nav-label">Miners</span>
-        </button>
-        <button class="nav-item" data-screen="boost">
-          <div class="nav-icon">🚀</div>
-          <span class="nav-label">Boost</span>
-          <div class="nav-badge boost-badge" id="boostBadge">FREE</div>
-        </button>
-        <button class="nav-item" data-screen="tasks">
-          <div class="nav-icon">📋</div>
-          <span class="nav-label">Tasks</span>
-          <div class="nav-badge" id="taskBadge">8</div>
-        </button>
-        <button class="nav-item" data-screen="friends">
-          <div class="nav-icon">👥</div>
-          <span class="nav-label">Friends</span>
-        </button>
-        <button class="nav-item" data-screen="leaderboard">
-          <div class="nav-icon">🏆</div>
-          <span class="nav-label">Top</span>
-        </button>
+      <!-- Bottom Navigation - Scrollable -->
+      <div class="bottom-nav-wrapper">
+        <div class="bottom-nav">
+          <button class="nav-item active" data-screen="game">
+            <div class="nav-icon">⛏️</div>
+            <span class="nav-label">Mine</span>
+            <div class="nav-indicator"></div>
+          </button>
+          <button class="nav-item" data-screen="miners">
+            <div class="nav-icon">🤖</div>
+            <span class="nav-label">Miners</span>
+          </button>
+          <button class="nav-item" data-screen="boost">
+            <div class="nav-icon">🚀</div>
+            <span class="nav-label">Boost</span>
+            <div class="nav-badge boost-badge" id="boostBadge">FREE</div>
+          </button>
+          <button class="nav-item" data-screen="tasks">
+            <div class="nav-icon">📋</div>
+            <span class="nav-label">Tasks</span>
+            <div class="nav-badge" id="taskBadge">8</div>
+          </button>
+          <button class="nav-item" data-screen="shop">
+            <div class="nav-icon">🛒</div>
+            <span class="nav-label">Shop</span>
+          </button>
+          <button class="nav-item" data-screen="wallet">
+            <div class="nav-icon">💰</div>
+            <span class="nav-label">Wallet</span>
+            <div class="nav-badge new-badge">NEW</div>
+          </button>
+          <button class="nav-item" data-screen="leaderboard">
+            <div class="nav-icon">🏆</div>
+            <span class="nav-label">Top</span>
+          </button>
+          <button class="nav-item" data-screen="friends">
+            <div class="nav-icon">👥</div>
+            <span class="nav-label">Friends</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -262,6 +283,45 @@
             </div>
           </div>
         </div>
+        <!-- Wallet Quick Access -->
+        <div class="profile-section wallet-quick-section">
+          <div class="profile-wallet-card" onclick="switchScreen('wallet')">
+            <div class="wallet-card-icon">💰</div>
+            <div class="wallet-card-info">
+              <h4>My Wallet</h4>
+              <p>View balance & withdraw</p>
+            </div>
+            <div class="wallet-card-balance">
+              <span class="wallet-balance-value" id="profileWalletBalance">0</span>
+              <span class="wallet-balance-label">$BANANA</span>
+            </div>
+            <div class="wallet-card-arrow">→</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="profile-section">
+          <h3 class="section-title">⚡ Quick Actions</h3>
+          <div class="profile-actions-grid">
+            <button class="profile-action-btn" onclick="switchScreen('shop')">
+              <span class="action-icon">🛒</span>
+              <span class="action-label">Shop</span>
+            </button>
+            <button class="profile-action-btn" onclick="switchScreen('miners')">
+              <span class="action-icon">🤖</span>
+              <span class="action-label">Miners</span>
+            </button>
+            <button class="profile-action-btn" onclick="switchScreen('boost')">
+              <span class="action-icon">🚀</span>
+              <span class="action-label">Boost</span>
+            </button>
+            <button class="profile-action-btn" onclick="switchScreen('leaderboard')">
+              <span class="action-icon">🏆</span>
+              <span class="action-label">Leaderboard</span>
+            </button>
+          </div>
+        </div>
+
         <div class="profile-section">
           <h3 class="section-title">🔗 Connect</h3>
           <div class="social-buttons">
@@ -290,6 +350,12 @@
         </div>
       </div>
       <div class="boost-container">
+        <!-- Active Boosters Section -->
+        <div class="boost-section active-boosters-section" id="activeBoostersSection" style="display: none;">
+          <h3 class="boost-section-title">🔥 Active Boosters</h3>
+          <div class="active-boosters-list" id="activeBoostersList"></div>
+        </div>
+        
         <div class="boost-section">
           <h3 class="boost-section-title">Your daily boosters:</h3>
           <div class="daily-boosters-grid">
@@ -309,9 +375,17 @@
             </div>
           </div>
         </div>
+        
         <div class="boost-section">
           <h3 class="boost-section-title">Boosters:</h3>
           <div class="boosters-list" id="boostersList"></div>
+        </div>
+        
+        <!-- Buy More Boosters Link -->
+        <div class="boost-shop-link" onclick="switchScreen('shop')">
+          <span class="boost-shop-icon">🛒</span>
+          <span class="boost-shop-text">Buy Power Boosters</span>
+          <span class="boost-shop-arrow">→</span>
         </div>
       </div>
     </div>
@@ -418,11 +492,208 @@
           <span id="leaderboardBalance">0</span>
         </div>
       </div>
+      
+      <!-- User Rank Card -->
+      <div class="user-rank-card" id="userRankCard">
+        <div class="rank-position">
+          <span class="rank-number" id="userRankNumber">#--</span>
+          <span class="rank-label">Your Rank</span>
+        </div>
+        <div class="rank-stats">
+          <div class="rank-stat">
+            <span class="rank-stat-value" id="userRankCoins">0</span>
+            <span class="rank-stat-label">Coins</span>
+          </div>
+          <div class="rank-stat">
+            <span class="rank-stat-value" id="userRankLevel">1</span>
+            <span class="rank-stat-label">Level</span>
+          </div>
+        </div>
+      </div>
+      
       <div class="leaderboard-tabs">
         <button class="tab-btn active" data-lb="coins">💰 Richest</button>
-        <button class="tab-btn" data-lb="miners">⛏️ Top Miners</button>
+        <button class="tab-btn" data-lb="miners">⛏️ Miners</button>
+        <button class="tab-btn" data-lb="level">⭐ Level</button>
       </div>
       <div class="leaderboard-container" id="leaderboardList"></div>
+    </div>
+
+    <!-- Wallet Screen -->
+    <div id="wallet" class="screen">
+      <div class="screen-header">
+        <button class="back-btn" data-back="game">←</button>
+        <h2>💰 Wallet</h2>
+        <div class="header-balance">
+          <span>🍌</span>
+          <span id="walletBalance">0</span>
+        </div>
+      </div>
+      
+      <div class="wallet-container">
+        <!-- Token Balance Card -->
+        <div class="token-balance-card">
+          <div class="token-glow"></div>
+          <div class="token-header">
+            <div class="token-logo">
+              <span class="token-icon">🍌</span>
+              <div class="token-pulse"></div>
+            </div>
+            <div class="token-info">
+              <span class="token-name">BANANA</span>
+              <span class="token-network">BEP-20 Token</span>
+            </div>
+          </div>
+          <div class="token-amount">
+            <span class="token-value" id="tokenBalance">0</span>
+            <span class="token-symbol">$BANANA</span>
+          </div>
+          <div class="token-usd">
+            <span class="usd-value" id="tokenUsdValue">≈ $0.00</span>
+            <span class="token-rate">1 $BANANA = $0.0001</span>
+          </div>
+        </div>
+
+        <!-- Mining Stats -->
+        <div class="wallet-section">
+          <h3 class="wallet-section-title">⛏️ Mining Statistics</h3>
+          <div class="mining-stats-grid">
+            <div class="mining-stat-card">
+              <span class="stat-icon">📊</span>
+              <span class="stat-value" id="walletTotalMined">0</span>
+              <span class="stat-label">Total Mined</span>
+            </div>
+            <div class="mining-stat-card">
+              <span class="stat-icon">⚡</span>
+              <span class="stat-value" id="walletMiningPower">0</span>
+              <span class="stat-label">Mining Power</span>
+            </div>
+            <div class="mining-stat-card">
+              <span class="stat-icon">💎</span>
+              <span class="stat-value" id="walletPerHour">0</span>
+              <span class="stat-label">Per Hour</span>
+            </div>
+            <div class="mining-stat-card">
+              <span class="stat-icon">🏆</span>
+              <span class="stat-value" id="walletRank">#--</span>
+              <span class="stat-label">Global Rank</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Withdraw Section - Coming Soon -->
+        <div class="wallet-section withdraw-section">
+          <div class="coming-soon-overlay">
+            <div class="coming-soon-badge">
+              <span class="badge-icon">🚀</span>
+              <span class="badge-text">COMING SOON</span>
+            </div>
+          </div>
+          <h3 class="wallet-section-title">💸 Withdraw</h3>
+          <p class="wallet-section-desc">Convert your $BANANA to real crypto!</p>
+          
+          <div class="withdraw-options">
+            <div class="withdraw-option disabled">
+              <div class="withdraw-icon">
+                <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="USDT" onerror="this.textContent='💵'">
+              </div>
+              <div class="withdraw-info">
+                <span class="withdraw-name">USDT (TRC-20)</span>
+                <span class="withdraw-min">Min: 100,000 $BANANA</span>
+              </div>
+              <div class="withdraw-rate">1M = $100</div>
+            </div>
+            
+            <div class="withdraw-option disabled">
+              <div class="withdraw-icon">
+                <img src="https://cryptologos.cc/logos/bnb-bnb-logo.png" alt="BNB" onerror="this.textContent='🔶'">
+              </div>
+              <div class="withdraw-info">
+                <span class="withdraw-name">BNB (BEP-20)</span>
+                <span class="withdraw-min">Min: 500,000 $BANANA</span>
+              </div>
+              <div class="withdraw-rate">1M = $100</div>
+            </div>
+            
+            <div class="withdraw-option disabled">
+              <div class="withdraw-icon">
+                <img src="https://cryptologos.cc/logos/toncoin-ton-logo.png" alt="TON" onerror="this.textContent='💎'">
+              </div>
+              <div class="withdraw-info">
+                <span class="withdraw-name">TON</span>
+                <span class="withdraw-min">Min: 250,000 $BANANA</span>
+              </div>
+              <div class="withdraw-rate">1M = $100</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Airdrop Info -->
+        <div class="wallet-section airdrop-section">
+          <div class="airdrop-card">
+            <div class="airdrop-icon">🪂</div>
+            <div class="airdrop-info">
+              <h4>$BANANA Airdrop</h4>
+              <p>Keep mining to qualify for the upcoming token airdrop!</p>
+            </div>
+          </div>
+          <div class="airdrop-requirements">
+            <div class="requirement-item">
+              <span class="req-icon">✅</span>
+              <span class="req-text">Mine at least 10,000 $BANANA</span>
+              <span class="req-status" id="req1Status">--</span>
+            </div>
+            <div class="requirement-item">
+              <span class="req-icon">✅</span>
+              <span class="req-text">Reach Level 5</span>
+              <span class="req-status" id="req2Status">--</span>
+            </div>
+            <div class="requirement-item">
+              <span class="req-icon">✅</span>
+              <span class="req-text">Invite 3 friends</span>
+              <span class="req-status" id="req3Status">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connect Wallet - Coming Soon -->
+        <div class="wallet-section connect-section">
+          <h3 class="wallet-section-title">🔗 Connect Wallet</h3>
+          <p class="wallet-section-desc">Link your crypto wallet for withdrawals</p>
+          <button class="connect-wallet-btn" onclick="showComingSoon()">
+            <span class="wallet-icon">🦊</span>
+            <span>Connect Wallet</span>
+            <span class="soon-tag">Soon</span>
+          </button>
+        </div>
+
+        <!-- Token Info -->
+        <div class="wallet-section token-info-section">
+          <h3 class="wallet-section-title">📜 Token Information</h3>
+          <div class="token-details">
+            <div class="token-detail-row">
+              <span class="detail-label">Token Name</span>
+              <span class="detail-value">Banana Coin</span>
+            </div>
+            <div class="token-detail-row">
+              <span class="detail-label">Symbol</span>
+              <span class="detail-value">$BANANA</span>
+            </div>
+            <div class="token-detail-row">
+              <span class="detail-label">Network</span>
+              <span class="detail-value">BNB Smart Chain</span>
+            </div>
+            <div class="token-detail-row">
+              <span class="detail-label">Total Supply</span>
+              <span class="detail-value">1,000,000,000</span>
+            </div>
+            <div class="token-detail-row">
+              <span class="detail-label">Contract</span>
+              <span class="detail-value contract">Coming Soon</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Shop Screen -->
@@ -552,6 +823,198 @@
             </div>
           </div>
         </div>
+
+        <!-- Lucky Spins Section -->
+        <div class="shop-section lucky-spin-section">
+          <h3 class="shop-section-title">🎰 Lucky Spins</h3>
+          <p class="shop-section-desc">Spin the wheel to win up to 100K coins!</p>
+          
+          <div class="spin-counter-card">
+            <div class="spin-wheel-icon">🎡</div>
+            <div class="spin-counter-info">
+              <span class="spin-counter-label">Your Spins</span>
+              <span class="spin-counter-value" id="userSpinCount">0</span>
+            </div>
+            <button class="use-spin-btn" id="useSpinBtn" onclick="useLuckySpin()">🎰 Spin Now!</button>
+          </div>
+          
+          <div class="spin-products-grid">
+            <div class="spin-product-card" onclick="buyProduct('spin_single')">
+              <div class="spin-product-icon">🎰</div>
+              <div class="spin-product-name">1 Spin</div>
+              <div class="spin-product-price">₹19</div>
+            </div>
+            <div class="spin-product-card popular" onclick="buyProduct('spin_pack')">
+              <div class="spin-badge">+1 FREE</div>
+              <div class="spin-product-icon">🎰🎰</div>
+              <div class="spin-product-name">5+1 Spins</div>
+              <div class="spin-product-price">₹79</div>
+            </div>
+            <div class="spin-product-card best" onclick="buyProduct('spin_mega')">
+              <div class="spin-badge">BEST VALUE</div>
+              <div class="spin-product-icon">🎰🎰🎰</div>
+              <div class="spin-product-name">15+5 Spins</div>
+              <div class="spin-product-price">₹199</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coin Packs Section -->
+        <div class="shop-section coin-packs-section">
+          <h3 class="shop-section-title">💰 Coin Packs</h3>
+          <p class="shop-section-desc">Instant coins with bonus!</p>
+          
+          <div class="coin-packs-grid">
+            <div class="coin-pack-card" onclick="buyProduct('coin_pack_small')">
+              <div class="coin-pack-icon">💰</div>
+              <div class="coin-pack-amount">50K</div>
+              <div class="coin-pack-price">₹49</div>
+            </div>
+            <div class="coin-pack-card" onclick="buyProduct('coin_pack_medium')">
+              <div class="coin-pack-bonus">+10%</div>
+              <div class="coin-pack-icon">💰💰</div>
+              <div class="coin-pack-amount">165K</div>
+              <div class="coin-pack-price">₹99</div>
+            </div>
+            <div class="coin-pack-card popular" onclick="buyProduct('coin_pack_large')">
+              <div class="coin-pack-bonus">+20%</div>
+              <div class="coin-pack-icon">💰💰💰</div>
+              <div class="coin-pack-amount">600K</div>
+              <div class="coin-pack-price">₹249</div>
+            </div>
+            <div class="coin-pack-card mega" onclick="buyProduct('coin_pack_mega')">
+              <div class="coin-pack-bonus">+30%</div>
+              <div class="coin-pack-icon">💎</div>
+              <div class="coin-pack-amount">2.6M</div>
+              <div class="coin-pack-price">₹799</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Power Boosters Section -->
+        <div class="shop-section boosters-section">
+          <h3 class="shop-section-title">⚡ Power Boosters</h3>
+          <p class="shop-section-desc">Multiply your mining power!</p>
+          
+          <div class="booster-products-list">
+            <div class="booster-product-card" onclick="buyProduct('booster_2x_1h')">
+              <div class="booster-product-icon">🚀</div>
+              <div class="booster-product-info">
+                <div class="booster-product-name">2x Mining</div>
+                <div class="booster-product-duration">1 Hour</div>
+              </div>
+              <div class="booster-product-price">₹29</div>
+            </div>
+            <div class="booster-product-card" onclick="buyProduct('booster_3x_1h')">
+              <div class="booster-product-icon">🔥</div>
+              <div class="booster-product-info">
+                <div class="booster-product-name">3x Mining</div>
+                <div class="booster-product-duration">1 Hour</div>
+              </div>
+              <div class="booster-product-price">₹49</div>
+            </div>
+            <div class="booster-product-card hot" onclick="buyProduct('booster_5x_30m')">
+              <div class="hot-badge">HOT</div>
+              <div class="booster-product-icon">💥</div>
+              <div class="booster-product-info">
+                <div class="booster-product-name">5x Mining</div>
+                <div class="booster-product-duration">30 Minutes</div>
+              </div>
+              <div class="booster-product-price">₹49</div>
+            </div>
+            <div class="booster-product-card" onclick="buyProduct('energy_refill')">
+              <div class="booster-product-icon">⚡</div>
+              <div class="booster-product-info">
+                <div class="booster-product-name">Full Energy</div>
+                <div class="booster-product-duration">Instant Refill</div>
+              </div>
+              <div class="booster-product-price">₹19</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lucky Spin Modal -->
+    <div id="spinModal" class="modal spin-modal">
+      <div class="spin-modal-backdrop"></div>
+      <div class="spin-modal-content">
+        <button class="spin-modal-close" onclick="closeSpinModal()">✕</button>
+        
+        <div class="spin-header">
+          <div class="spin-title-glow"></div>
+          <h2 class="spin-title">🎰 LUCKY SPIN</h2>
+          <p class="spin-subtitle">Spin to win amazing rewards!</p>
+        </div>
+        
+        <div class="spin-wheel-wrapper">
+          <div class="spin-wheel-outer-ring"></div>
+          <div class="spin-wheel-lights">
+            <span class="wheel-light" style="--i:0"></span>
+            <span class="wheel-light" style="--i:1"></span>
+            <span class="wheel-light" style="--i:2"></span>
+            <span class="wheel-light" style="--i:3"></span>
+            <span class="wheel-light" style="--i:4"></span>
+            <span class="wheel-light" style="--i:5"></span>
+            <span class="wheel-light" style="--i:6"></span>
+            <span class="wheel-light" style="--i:7"></span>
+            <span class="wheel-light" style="--i:8"></span>
+            <span class="wheel-light" style="--i:9"></span>
+            <span class="wheel-light" style="--i:10"></span>
+            <span class="wheel-light" style="--i:11"></span>
+            <span class="wheel-light" style="--i:12"></span>
+            <span class="wheel-light" style="--i:13"></span>
+            <span class="wheel-light" style="--i:14"></span>
+            <span class="wheel-light" style="--i:15"></span>
+          </div>
+          
+          <div class="spin-wheel-container">
+            <div class="spin-wheel" id="spinWheel">
+              <div class="wheel-segment seg-gold" style="--i:0"><span class="seg-icon">💰</span><span class="seg-text">1K</span></div>
+              <div class="wheel-segment seg-green" style="--i:1"><span class="seg-icon">💎</span><span class="seg-text">5K</span></div>
+              <div class="wheel-segment seg-blue" style="--i:2"><span class="seg-icon">🪙</span><span class="seg-text">10K</span></div>
+              <div class="wheel-segment seg-purple" style="--i:3"><span class="seg-icon">⚡</span><span class="seg-text">Energy</span></div>
+              <div class="wheel-segment seg-pink" style="--i:4"><span class="seg-icon">💰</span><span class="seg-text">25K</span></div>
+              <div class="wheel-segment seg-orange" style="--i:5"><span class="seg-icon">🚀</span><span class="seg-text">2x</span></div>
+              <div class="wheel-segment seg-red" style="--i:6"><span class="seg-icon">🤑</span><span class="seg-text">50K</span></div>
+              <div class="wheel-segment seg-cyan" style="--i:7"><span class="seg-icon">📦</span><span class="seg-text">Box</span></div>
+            </div>
+            <div class="spin-wheel-center">
+              <div class="center-glow"></div>
+              <span class="center-icon">🍌</span>
+            </div>
+          </div>
+          
+          <div class="spin-pointer-container">
+            <div class="spin-pointer">
+              <div class="pointer-glow"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="spin-controls">
+          <div class="spins-remaining">
+            <span class="spins-icon">🎟️</span>
+            <span class="spins-count" id="modalSpinCount">0</span>
+            <span class="spins-label">Spins Left</span>
+          </div>
+          <button class="spin-now-btn" id="spinNowBtn" onclick="doSpin()">
+            <span class="btn-glow"></span>
+            <span class="btn-text">🎰 SPIN!</span>
+          </button>
+        </div>
+        
+        <div class="spin-result-container" id="spinResultContainer">
+          <div class="result-celebration">
+            <div class="celebration-burst"></div>
+            <div class="result-icon" id="resultIcon">🎉</div>
+          </div>
+          <div class="result-text">
+            <span class="result-label">You Won!</span>
+            <span class="result-value" id="resultValue">10,000 Coins</span>
+          </div>
+          <button class="result-claim-btn" onclick="claimSpinReward()">✨ Awesome!</button>
+        </div>
       </div>
     </div>
 
@@ -587,6 +1050,18 @@
     <!-- Turbo Mode Indicator -->
     <div class="turbo-active-indicator" id="turboIndicator">
       🚀 TURBO <span class="turbo-timer">20s</span>
+    </div>
+    
+    <!-- Paid Booster Indicator -->
+    <div class="paid-booster-indicator" id="paidBoosterIndicator">
+      <span class="booster-indicator-icon">🔥</span>
+      <span class="booster-indicator-text" id="boosterIndicatorText">2x Active</span>
+    </div>
+    
+    <!-- Anti-Cheat Cooldown Indicator -->
+    <div class="cooldown-indicator" id="cooldownIndicator">
+      <span class="cooldown-icon">⏳</span>
+      <span class="cooldown-text" id="cooldownText">Cooldown: 30s</span>
     </div>
   </div>
 

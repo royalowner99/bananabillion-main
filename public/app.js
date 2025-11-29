@@ -167,6 +167,8 @@ async function initApp() {
       userData.ownedCosmetics = data.user.ownedCosmetics || [];
       userData.activeCosmetic = data.user.activeCosmetic || null;
       userData.specialEmoji = data.user.specialEmoji || null;
+      userData.activeBoosters = data.user.activeBoosters || [];
+      userData.luckySpins = data.user.luckySpins || 0;
       
       console.log('User loaded:', userData.username, 'Coins:', userData.coins, 'TapPower:', userData.tapPower, 'BananaPass:', userData.bananaPass);
       
@@ -180,6 +182,7 @@ async function initApp() {
       startPassiveIncome();
       checkDailyReward();
       updateBoostBadge();
+      updatePaidBoosterIndicator();
       
       // Apply cosmetics and Banana Pass badge
       if (userData.activeCosmetic || userData.bananaPass) {
@@ -230,13 +233,35 @@ function updateAllUI() {
   // Update boost badge
   updateBoostBadge();
   
-  // Update mining stats - show with Banana Pass bonus if active
+  // Update mining stats - show with all bonuses
   let displayPower = userData.tapPower || 1;
   if (userData.bananaPass && userData.miningBonus) {
     displayPower = Math.floor(displayPower * (1 + userData.miningBonus / 100));
   }
+  // Apply active booster multiplier
+  const activeMultiplier = getActiveBoosterMultiplier();
+  if (activeMultiplier > 1) {
+    displayPower = Math.floor(displayPower * activeMultiplier);
+  }
+  // Apply turbo mode
+  if (turboModeActive) {
+    displayPower = Math.floor(displayPower * 5);
+  }
   const miningPowerEl = document.getElementById('miningPower');
-  if (miningPowerEl) miningPowerEl.textContent = formatNumber(displayPower);
+  if (miningPowerEl) {
+    miningPowerEl.textContent = formatNumber(displayPower);
+    // Add visual indicator if booster or turbo is active
+    if (activeMultiplier > 1 || turboModeActive) {
+      miningPowerEl.classList.add('boosted');
+      let title = '';
+      if (turboModeActive) title += '5x Turbo! ';
+      if (activeMultiplier > 1) title += `${activeMultiplier}x Booster`;
+      miningPowerEl.title = title.trim();
+    } else {
+      miningPowerEl.classList.remove('boosted');
+      miningPowerEl.title = '';
+    }
+  }
   
   const perHourEl = document.getElementById('perHour');
   if (perHourEl) perHourEl.textContent = formatNumber(calculatePerHour());
@@ -299,7 +324,159 @@ function calculatePerHour() {
 let mineCount = 0;
 let mineTimeout = null;
 
+// Anti-Auto-Clicker System
+const antiCheat = {
+  tapTimes: [],           // Store last tap timestamps
+  maxTapsPerSecond: 15,   // Maximum allowed taps per second
+  warningCount: 0,        // Number of warnings
+  maxWarnings: 3,         // Max warnings before penalty
+  penaltyUntil: 0,        // Penalty end timestamp
+  penaltyDuration: 30000, // 30 second penalty
+  suspiciousPatterns: 0,  // Count of suspicious patterns detected
+  lastTapInterval: 0,     // Last interval between taps
+  sameIntervalCount: 0,   // Count of same intervals (bot detection)
+  
+  // Check if tap is allowed
+  canTap: function() {
+    const now = Date.now();
+    
+    // Check if in penalty
+    if (now < this.penaltyUntil) {
+      const remaining = Math.ceil((this.penaltyUntil - now) / 1000);
+      return { allowed: false, reason: `⏳ Cooldown: ${remaining}s (too fast!)` };
+    }
+    
+    // Remove taps older than 1 second
+    this.tapTimes = this.tapTimes.filter(t => now - t < 1000);
+    
+    // Check taps per second
+    if (this.tapTimes.length >= this.maxTapsPerSecond) {
+      this.warningCount++;
+      if (this.warningCount >= this.maxWarnings) {
+        this.penaltyUntil = now + this.penaltyDuration;
+        this.warningCount = 0;
+        this.suspiciousPatterns++;
+        return { allowed: false, reason: '🚫 Auto-clicker detected! 30s cooldown.' };
+      }
+      return { allowed: false, reason: '⚠️ Slow down! Tapping too fast.' };
+    }
+    
+    // Check for bot-like patterns (same interval between taps)
+    if (this.tapTimes.length > 0) {
+      const interval = now - this.tapTimes[this.tapTimes.length - 1];
+      
+      // If interval is suspiciously consistent (within 5ms tolerance)
+      if (Math.abs(interval - this.lastTapInterval) < 5 && interval < 200) {
+        this.sameIntervalCount++;
+        if (this.sameIntervalCount > 10) {
+          this.penaltyUntil = now + this.penaltyDuration * 2; // Double penalty for bots
+          this.sameIntervalCount = 0;
+          this.suspiciousPatterns++;
+          return { allowed: false, reason: '🤖 Bot pattern detected! 60s cooldown.' };
+        }
+      } else {
+        this.sameIntervalCount = Math.max(0, this.sameIntervalCount - 1);
+      }
+      this.lastTapInterval = interval;
+    }
+    
+    // Record this tap
+    this.tapTimes.push(now);
+    return { allowed: true };
+  },
+  
+  // Reset on legitimate activity
+  reset: function() {
+    this.warningCount = Math.max(0, this.warningCount - 1);
+  }
+};
+
+// Verify tap is from real user interaction
+function isRealTap(event) {
+  // Check if event is trusted (from real user action)
+  if (!event.isTrusted) {
+    return false;
+  }
+  
+  // Check for suspicious event properties
+  if (event.screenX === 0 && event.screenY === 0 && event.clientX === 0 && event.clientY === 0) {
+    return false;
+  }
+  
+  return true;
+}
+
+// Show cooldown indicator
+let cooldownInterval = null;
+function showCooldownIndicator() {
+  const indicator = document.getElementById('cooldownIndicator');
+  const textEl = document.getElementById('cooldownText');
+  const mineBtn = document.getElementById('mineButton');
+  
+  if (!indicator) return;
+  
+  indicator.classList.add('show');
+  if (mineBtn) mineBtn.classList.add('cooldown');
+  
+  // Clear existing interval
+  if (cooldownInterval) clearInterval(cooldownInterval);
+  
+  // Update countdown
+  cooldownInterval = setInterval(() => {
+    const remaining = Math.max(0, Math.ceil((antiCheat.penaltyUntil - Date.now()) / 1000));
+    
+    if (remaining <= 0) {
+      indicator.classList.remove('show');
+      if (mineBtn) mineBtn.classList.remove('cooldown');
+      clearInterval(cooldownInterval);
+      cooldownInterval = null;
+      showNotification('✅ You can tap again!');
+    } else {
+      if (textEl) textEl.textContent = `Cooldown: ${remaining}s`;
+    }
+  }, 100);
+}
+
+// Hide cooldown indicator
+function hideCooldownIndicator() {
+  const indicator = document.getElementById('cooldownIndicator');
+  const mineBtn = document.getElementById('mineButton');
+  
+  if (indicator) indicator.classList.remove('show');
+  if (mineBtn) mineBtn.classList.remove('cooldown');
+  
+  if (cooldownInterval) {
+    clearInterval(cooldownInterval);
+    cooldownInterval = null;
+  }
+}
+
 document.getElementById('mineButton').addEventListener('click', async (e) => {
+  // Anti-cheat: Verify real tap
+  if (!isRealTap(e)) {
+    console.log('Fake tap detected');
+    return;
+  }
+  
+  // Anti-cheat: Check tap rate
+  const tapCheck = antiCheat.canTap();
+  if (!tapCheck.allowed) {
+    showNotification(tapCheck.reason);
+    
+    // Show cooldown indicator if in penalty
+    if (antiCheat.penaltyUntil > Date.now()) {
+      showCooldownIndicator();
+    }
+    
+    // Add warning shake to button
+    const btn = document.getElementById('mineButton');
+    if (btn) {
+      btn.classList.add('warning');
+      setTimeout(() => btn.classList.remove('warning'), 300);
+    }
+    return;
+  }
+  
   if (userData.energy <= 0) {
     showNotification('⚡ Not enough energy!');
     return;
@@ -312,10 +489,23 @@ document.getElementById('mineButton').addEventListener('click', async (e) => {
   button.style.transform = 'scale(0.95)';
   setTimeout(() => button.style.transform = '', 100);
   
-  // Calculate tap power with Banana Pass bonus
+  // Calculate tap power with all bonuses
   let displayTapPower = Math.floor(Number(userData.tapPower) || 1);
+  
+  // Apply Banana Pass bonus (+20%)
   if (userData.bananaPass && userData.miningBonus) {
     displayTapPower = Math.floor(displayTapPower * (1 + userData.miningBonus / 100));
+  }
+  
+  // Apply active paid boosters (2x, 3x, 5x)
+  const activeMultiplier = getActiveBoosterMultiplier();
+  if (activeMultiplier > 1) {
+    displayTapPower = Math.floor(displayTapPower * activeMultiplier);
+  }
+  
+  // Apply turbo mode (5x) - stacks with other bonuses
+  if (turboModeActive) {
+    displayTapPower = Math.floor(displayTapPower * 5);
   }
   
   // Create floating reward
@@ -333,10 +523,17 @@ document.getElementById('mineButton').addEventListener('click', async (e) => {
     // Haptic not supported, ignore
   }
   
-  // Update UI immediately - apply Banana Pass bonus if active
+  // Update UI immediately - apply all bonuses
   let tapPower = Math.floor(Number(userData.tapPower) || 1);
   if (userData.bananaPass && userData.miningBonus) {
     tapPower = Math.floor(tapPower * (1 + userData.miningBonus / 100));
+  }
+  if (activeMultiplier > 1) {
+    tapPower = Math.floor(tapPower * activeMultiplier);
+  }
+  // Apply turbo mode
+  if (turboModeActive) {
+    tapPower = Math.floor(tapPower * 5);
   }
   userData.coins = Math.floor(Number(userData.coins) || 0) + tapPower;
   userData.energy = Math.max(0, (Number(userData.energy) || 0) - 1);
@@ -899,24 +1096,57 @@ document.getElementById('claimDailyBtn').addEventListener('click', async () => {
   }
 });
 
+// Leaderboard state
+let currentLeaderboardType = 'coins';
+
 // Load Leaderboard
-async function loadLeaderboard() {
+async function loadLeaderboard(type = 'coins') {
+  currentLeaderboardType = type;
+  
   try {
-    const response = await fetch(`${API_URL}/user/leaderboard/top`);
+    // Load user rank
+    loadUserRank();
+    
+    const response = await fetch(`${API_URL}/user/leaderboard/top?type=${type}`);
     const data = await response.json();
     
     if (data.success) {
-      renderLeaderboard(data.leaderboard);
+      renderLeaderboard(data.leaderboard, type);
     }
   } catch (error) {
     console.error('Leaderboard error:', error);
   }
 }
 
+// Load user's rank
+async function loadUserRank() {
+  try {
+    const response = await fetch(`${API_URL}/user/rank/${userData.telegramId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      const rankEl = document.getElementById('userRankNumber');
+      const coinsEl = document.getElementById('userRankCoins');
+      const levelEl = document.getElementById('userRankLevel');
+      
+      if (rankEl) rankEl.textContent = `#${data.rank}`;
+      if (coinsEl) coinsEl.textContent = formatNumber(data.coins);
+      if (levelEl) levelEl.textContent = data.level || 1;
+    }
+  } catch (err) {
+    console.error('Load rank error:', err);
+  }
+}
+
 // Render Leaderboard
-function renderLeaderboard(players) {
+function renderLeaderboard(players, type = 'coins') {
   const container = document.getElementById('leaderboardList');
   container.innerHTML = '';
+  
+  if (players.length === 0) {
+    container.innerHTML = '<div class="no-data">No players yet</div>';
+    return;
+  }
   
   players.forEach((player, index) => {
     const rank = index + 1;
@@ -925,15 +1155,32 @@ function renderLeaderboard(players) {
     else if (rank === 2) rankClass = 'top-2';
     else if (rank === 3) rankClass = 'top-3';
     
+    // Determine what value to show based on type
+    let scoreValue = player.coins;
+    let scoreIcon = '🍌';
+    if (type === 'miners') {
+      scoreValue = player.totalTaps;
+      scoreIcon = '⛏️';
+    } else if (type === 'level') {
+      scoreValue = player.level;
+      scoreIcon = '⭐';
+    }
+    
+    const isCurrentUser = player.username === userData.username;
+    
     const item = document.createElement('div');
-    item.className = `leaderboard-item ${rankClass}`;
+    item.className = `leaderboard-item ${rankClass} ${isCurrentUser ? 'current-user' : ''}`;
     item.innerHTML = `
       <div class="lb-rank">${rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank}</div>
+      <div class="lb-avatar">
+        ${player.photoUrl ? `<img src="${player.photoUrl}" alt="">` : '🦍'}
+        ${player.bananaPass ? '<span class="lb-pass-badge">👑</span>' : ''}
+      </div>
       <div class="lb-info">
-        <div class="lb-name">${player.username || 'Anonymous'}</div>
+        <div class="lb-name">${player.username || player.firstName || 'Anonymous'}</div>
         <div class="lb-level">Level ${player.level || 1}</div>
       </div>
-      <div class="lb-score">🍌 ${formatNumber(player.coins)}</div>
+      <div class="lb-score">${scoreIcon} ${formatNumber(scoreValue)}</div>
     `;
     
     container.appendChild(item);
@@ -1006,6 +1253,9 @@ function switchScreen(screenName) {
   }
   if (screenName === 'friends') {
     loadReferrals();
+  }
+  if (screenName === 'wallet') {
+    initWallet();
   }
 }
 
@@ -2710,6 +2960,8 @@ document.querySelectorAll('.leaderboard-tabs .tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.leaderboard-tabs .tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    const type = btn.dataset.lb;
+    loadLeaderboard(type);
   });
 });
 
@@ -2738,24 +2990,47 @@ function updateProfileUI() {
   if (!userData) return;
   
   // Profile info
-  document.getElementById('profileName').textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.username;
-  document.getElementById('profileUsername').textContent = userData.username || 'anonymous';
-  document.getElementById('profileId').textContent = userData.telegramId;
-  document.getElementById('profileLevel').textContent = userData.level || 1;
+  const profileNameEl = document.getElementById('profileName');
+  if (profileNameEl) profileNameEl.textContent = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.username;
+  
+  const profileUsernameEl = document.getElementById('profileUsername');
+  if (profileUsernameEl) profileUsernameEl.textContent = userData.username || 'anonymous';
+  
+  const profileIdEl = document.getElementById('profileId');
+  if (profileIdEl) profileIdEl.textContent = userData.telegramId;
+  
+  const profileLevelEl = document.getElementById('profileLevel');
+  if (profileLevelEl) profileLevelEl.textContent = userData.level || 1;
   
   // Profile stats
-  document.getElementById('profileCoins').textContent = formatNumber(userData.coins);
-  document.getElementById('profileTaps').textContent = formatNumber(userData.totalTaps || 0);
-  document.getElementById('profilePower').textContent = formatNumber(userData.tapPower || 1);
-  document.getElementById('profileReferrals').textContent = userData.referrals?.length || 0;
+  const profileCoinsEl = document.getElementById('profileCoins');
+  if (profileCoinsEl) profileCoinsEl.textContent = formatNumber(userData.coins);
+  
+  const profileTapsEl = document.getElementById('profileTaps');
+  if (profileTapsEl) profileTapsEl.textContent = formatNumber(userData.totalTaps || 0);
+  
+  const profilePowerEl = document.getElementById('profilePower');
+  if (profilePowerEl) profilePowerEl.textContent = formatNumber(userData.tapPower || 1);
+  
+  const profileReferralsEl = document.getElementById('profileReferrals');
+  if (profileReferralsEl) profileReferralsEl.textContent = userData.referrals?.length || 0;
   
   // Account info
   if (userData.createdAt) {
     const joinDate = new Date(userData.createdAt);
-    document.getElementById('profileJoined').textContent = joinDate.toLocaleDateString();
+    const profileJoinedEl = document.getElementById('profileJoined');
+    if (profileJoinedEl) profileJoinedEl.textContent = joinDate.toLocaleDateString();
   }
-  document.getElementById('profileStreak').textContent = `${userData.dailyStreak || 0} days`;
-  document.getElementById('profileEnergy').textContent = userData.maxEnergy || 1000;
+  
+  const profileStreakEl = document.getElementById('profileStreak');
+  if (profileStreakEl) profileStreakEl.textContent = `${userData.dailyStreak || 0} days`;
+  
+  const profileEnergyEl = document.getElementById('profileEnergy');
+  if (profileEnergyEl) profileEnergyEl.textContent = userData.maxEnergy || 1000;
+  
+  // Wallet balance in profile
+  const profileWalletBalanceEl = document.getElementById('profileWalletBalance');
+  if (profileWalletBalanceEl) profileWalletBalanceEl.textContent = formatNumber(userData.coins);
   
   // Update achievements
   updateAchievements();
@@ -2886,10 +3161,156 @@ function saveDailyBoosterData() {
 // Render boost screen
 function renderBoostScreen() {
   loadDailyBoosterData();
+  renderActiveBoosters();
   renderDailyBoosters();
   renderPurchasableBoosters();
   updateBoostBadge();
 }
+
+// Render active paid boosters
+function renderActiveBoosters() {
+  const section = document.getElementById('activeBoostersSection');
+  const list = document.getElementById('activeBoostersList');
+  if (!section || !list) return;
+  
+  // Get active boosters from userData
+  const activeBoosters = userData.activeBoosters || [];
+  const now = new Date();
+  
+  // Filter out expired boosters
+  const validBoosters = activeBoosters.filter(b => new Date(b.expiresAt) > now);
+  
+  if (validBoosters.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  list.innerHTML = '';
+  
+  validBoosters.forEach(booster => {
+    const expiresAt = new Date(booster.expiresAt);
+    const remainingMs = expiresAt - now;
+    const remainingMins = Math.ceil(remainingMs / 60000);
+    
+    const card = document.createElement('div');
+    card.className = 'active-booster-card';
+    card.innerHTML = `
+      <div class="active-booster-icon">${getBoosterIcon(booster.multiplier)}</div>
+      <div class="active-booster-info">
+        <span class="active-booster-name">${booster.name || booster.multiplier + 'x Mining'}</span>
+        <span class="active-booster-time">⏱️ ${remainingMins} min left</span>
+      </div>
+      <div class="active-booster-multiplier">${booster.multiplier}x</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// Get booster icon based on multiplier
+function getBoosterIcon(multiplier) {
+  if (multiplier >= 5) return '💥';
+  if (multiplier >= 3) return '🔥';
+  return '🚀';
+}
+
+// Get active booster multiplier (highest active)
+function getActiveBoosterMultiplier() {
+  const activeBoosters = userData.activeBoosters || [];
+  const now = new Date();
+  
+  let maxMultiplier = 1;
+  
+  activeBoosters.forEach(booster => {
+    if (new Date(booster.expiresAt) > now) {
+      if (booster.multiplier > maxMultiplier) {
+        maxMultiplier = booster.multiplier;
+      }
+    }
+  });
+  
+  return maxMultiplier;
+}
+
+// Clean up expired boosters periodically
+function cleanupExpiredBoosters() {
+  if (!userData.activeBoosters) return;
+  
+  const now = new Date();
+  const validBoosters = userData.activeBoosters.filter(b => new Date(b.expiresAt) > now);
+  
+  if (validBoosters.length !== userData.activeBoosters.length) {
+    userData.activeBoosters = validBoosters;
+    // Notify user if a booster expired
+    if (validBoosters.length < userData.activeBoosters.length) {
+      showNotification('⏱️ A booster has expired');
+    }
+  }
+}
+
+// Run cleanup every minute
+setInterval(cleanupExpiredBoosters, 60000);
+
+// Sync user data to server periodically (every 30 seconds)
+async function syncUserData() {
+  if (!userData || !userData.telegramId) return;
+  
+  try {
+    await fetch(`${API_URL}/game/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegramId: userData.telegramId,
+        coins: userData.coins,
+        energy: userData.energy,
+        totalTaps: userData.totalTaps,
+        level: userData.level,
+        tapPower: userData.tapPower,
+        maxEnergy: userData.maxEnergy,
+        activeBoosters: userData.activeBoosters
+      })
+    });
+  } catch (err) {
+    console.error('Sync error:', err);
+  }
+}
+
+// Sync every 30 seconds
+setInterval(syncUserData, 30000);
+
+// Also sync when page is about to close
+window.addEventListener('beforeunload', () => {
+  if (userData && userData.telegramId) {
+    navigator.sendBeacon(`${API_URL}/game/sync`, JSON.stringify({
+      telegramId: userData.telegramId,
+      coins: userData.coins,
+      energy: userData.energy,
+      totalTaps: userData.totalTaps
+    }));
+  }
+});
+
+// Update paid booster indicator
+function updatePaidBoosterIndicator() {
+  const indicator = document.getElementById('paidBoosterIndicator');
+  const textEl = document.getElementById('boosterIndicatorText');
+  const iconEl = indicator?.querySelector('.booster-indicator-icon');
+  
+  if (!indicator) return;
+  
+  const multiplier = getActiveBoosterMultiplier();
+  
+  if (multiplier > 1) {
+    indicator.classList.add('show');
+    if (textEl) textEl.textContent = `${multiplier}x Active`;
+    if (iconEl) iconEl.textContent = getBoosterIcon(multiplier);
+  } else {
+    indicator.classList.remove('show');
+  }
+}
+
+// Update indicator periodically
+setInterval(updatePaidBoosterIndicator, 5000);
 
 // Render daily free boosters
 function renderDailyBoosters() {
@@ -3114,9 +3535,7 @@ function activateTurbo() {
   
   closeBoosterModal();
   
-  // Save original tap power (before turbo multiplier)
-  originalTapPowerBeforeTurbo = userData.tapPower;
-  userData.tapPower = originalTapPowerBeforeTurbo * 5;
+  // Activate turbo mode (don't modify tapPower, use turboModeActive flag)
   turboModeActive = true;
   turboEndTime = Date.now() + 20000;
   
@@ -3150,9 +3569,7 @@ function activateTurbo() {
 function endTurboMode() {
   if (!turboModeActive) return;
   
-  userData.tapPower = originalTapPowerBeforeTurbo;
   turboModeActive = false;
-  originalTapPowerBeforeTurbo = 0;
   hideTurboIndicator();
   updateAllUI();
   showNotification('⏱️ Turbo mode ended!');
@@ -3424,7 +3841,18 @@ function updateBoxCount() {
 // Buy product with Razorpay
 async function buyProduct(productId) {
   try {
+    console.log('Buying product:', productId);
     showNotification('🔄 Creating order...');
+    
+    if (!productId) {
+      showNotification('❌ Invalid product');
+      return;
+    }
+    
+    if (!userData || !userData.telegramId) {
+      showNotification('❌ Please wait for app to load');
+      return;
+    }
     
     // Create order on server
     const response = await fetch(`${API_URL}/payment/create-order`, {
@@ -3437,6 +3865,7 @@ async function buyProduct(productId) {
     });
     
     const data = await response.json();
+    console.log('Create order response:', data);
     
     if (!data.success) {
       showNotification('❌ ' + (data.message || 'Failed to create order'));
@@ -3499,20 +3928,34 @@ async function verifyPayment(paymentResponse, telegramId) {
       showNotification('🎉 ' + data.message);
       
       // Handle different product types
-      if (data.boxes !== undefined) {
+      if (data.type === 'mystery_box' && data.boxes !== undefined) {
         userData.mysteryBoxes = data.boxes;
         updateBoxCount();
         showPurchaseSuccess('boxes', data.boxes);
-      } else if (data.cosmetic) {
+      } else if (data.type === 'cosmetic' && data.cosmetic) {
         userData.ownedCosmetics = data.ownedCosmetics;
         userData.activeCosmetic = data.cosmetic;
         updateShopUI();
         showPurchaseSuccess('cosmetic', data.cosmetic);
-      } else if (data.bananaPass) {
+      } else if (data.type === 'banana_pass' && data.bananaPass) {
         userData.bananaPass = true;
         userData.miningBonus = 20;
         updateShopUI();
         showPurchaseSuccess('banana_pass');
+      } else if (data.type === 'spin' && data.spins !== undefined) {
+        userData.luckySpins = data.spins;
+        updateSpinCount();
+        showPurchaseSuccess('spins', data.spins);
+      } else if (data.type === 'coin_pack' && data.coins !== undefined) {
+        userData.coins = data.coins;
+        updateBalanceDisplay();
+        showPurchaseSuccess('coins', data.coins);
+      } else if (data.type === 'booster') {
+        showPurchaseSuccess('booster', data.message);
+      } else if (data.type === 'energy' && data.energy !== undefined) {
+        userData.energy = data.energy;
+        updateAllUI();
+        showPurchaseSuccess('energy');
       }
     } else {
       showNotification('❌ ' + (data.message || 'Payment verification failed'));
@@ -3549,6 +3992,27 @@ function showPurchaseSuccess(type, value) {
       <div class="success-icon">🍌👑</div>
       <h2>Banana Pass Activated!</h2>
       <p>Enjoy +20% mining, special emoji, and daily 2x booster!</p>`;
+  } else if (type === 'spins') {
+    content = `
+      <div class="success-icon">🎰</div>
+      <h2>Spins Added!</h2>
+      <p>You now have <strong>${value}</strong> Lucky Spin(s)</p>
+      <p class="success-hint">Go spin the wheel to win prizes!</p>`;
+  } else if (type === 'coins') {
+    content = `
+      <div class="success-icon">💰</div>
+      <h2>Coins Added!</h2>
+      <p>Your balance: <strong>${formatNumber(value)}</strong> 🍌</p>`;
+  } else if (type === 'booster') {
+    content = `
+      <div class="success-icon">🚀</div>
+      <h2>Booster Activated!</h2>
+      <p>${value}</p>`;
+  } else if (type === 'energy') {
+    content = `
+      <div class="success-icon">⚡</div>
+      <h2>Energy Restored!</h2>
+      <p>Your energy is now full!</p>`;
   } else {
     content = `
       <div class="success-icon">🎉</div>
@@ -3667,6 +4131,7 @@ function createConfetti() {
 function initShop() {
   loadUserBoxes();
   loadUserInventory();
+  loadUserSpins();
   const shopBalanceEl = document.getElementById('shopBalance');
   if (shopBalanceEl) shopBalanceEl.textContent = formatNumber(userData.coins);
 }
@@ -3812,3 +4277,359 @@ async function claimPassBooster() {
 
 // Make claimPassBooster available globally
 window.claimPassBooster = claimPassBooster;
+
+// ==================== LUCKY SPIN SYSTEM ====================
+
+// Load user spins
+async function loadUserSpins() {
+  try {
+    const response = await fetch(`${API_URL}/payment/spins/${userData.telegramId}`);
+    const data = await response.json();
+    if (data.success) {
+      userData.luckySpins = data.spins;
+      updateSpinCount();
+    }
+  } catch (err) {
+    console.error('Load spins error:', err);
+  }
+}
+
+// Update spin count display
+function updateSpinCount() {
+  const countEl = document.getElementById('userSpinCount');
+  if (countEl) countEl.textContent = userData.luckySpins || 0;
+  
+  const spinBtn = document.getElementById('useSpinBtn');
+  if (spinBtn) {
+    spinBtn.disabled = !userData.luckySpins || userData.luckySpins < 1;
+    spinBtn.textContent = userData.luckySpins > 0 ? '🎰 Spin Now!' : '🎰 No Spins';
+  }
+}
+
+// Spin state
+let currentSpinReward = null;
+let isSpinning = false;
+
+// Open spin modal
+function useLuckySpin() {
+  const modal = document.getElementById('spinModal');
+  if (modal) {
+    modal.classList.add('active');
+    updateModalSpinCount();
+    resetSpinWheel();
+  }
+}
+
+// Update spin count in modal
+function updateModalSpinCount() {
+  const countEl = document.getElementById('modalSpinCount');
+  if (countEl) countEl.textContent = userData.luckySpins || 0;
+  
+  const spinBtn = document.getElementById('spinNowBtn');
+  if (spinBtn) {
+    spinBtn.disabled = !userData.luckySpins || userData.luckySpins < 1 || isSpinning;
+  }
+}
+
+// Reset spin wheel
+function resetSpinWheel() {
+  const wheel = document.getElementById('spinWheel');
+  const resultContainer = document.getElementById('spinResultContainer');
+  const controls = document.querySelector('.spin-controls');
+  
+  if (wheel) {
+    wheel.style.transition = 'none';
+    wheel.style.transform = 'rotate(0deg)';
+  }
+  if (resultContainer) resultContainer.classList.remove('show');
+  if (controls) controls.style.display = 'flex';
+}
+
+// Do the spin
+async function doSpin() {
+  if (!userData.luckySpins || userData.luckySpins < 1) {
+    showNotification('❌ No spins available! Buy some from the shop.');
+    return;
+  }
+  
+  if (isSpinning) return;
+  isSpinning = true;
+  
+  const modal = document.getElementById('spinModal');
+  const wheel = document.getElementById('spinWheel');
+  const spinBtn = document.getElementById('spinNowBtn');
+  
+  if (spinBtn) {
+    spinBtn.disabled = true;
+    spinBtn.querySelector('.btn-text').textContent = '🎰 Spinning...';
+  }
+  if (modal) modal.classList.add('spinning');
+  
+  try {
+    // Call API to get result
+    const response = await fetch(`${API_URL}/payment/use-spin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramId: userData.telegramId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      userData.luckySpins = data.remainingSpins;
+      currentSpinReward = data.reward;
+      
+      // Calculate wheel rotation
+      const segmentAngle = 360 / 8;
+      const rewardIndex = getSpinRewardIndex(data.reward);
+      // Spin multiple times + land on segment (offset to center of segment)
+      const baseRotation = 360 * 6; // 6 full rotations
+      const segmentRotation = (7 - rewardIndex) * segmentAngle; // Reverse because wheel spins clockwise
+      const randomOffset = (Math.random() - 0.5) * (segmentAngle * 0.6); // Random within segment
+      const targetAngle = baseRotation + segmentRotation + randomOffset;
+      
+      if (wheel) {
+        wheel.style.transition = 'transform 5s cubic-bezier(0.2, 0.8, 0.3, 1)';
+        wheel.style.transform = `rotate(${targetAngle}deg)`;
+      }
+      
+      // Show result after animation
+      setTimeout(() => {
+        isSpinning = false;
+        if (modal) modal.classList.remove('spinning');
+        showSpinResult(data.reward);
+      }, 5000);
+      
+    } else {
+      isSpinning = false;
+      if (modal) modal.classList.remove('spinning');
+      if (spinBtn) {
+        spinBtn.disabled = false;
+        spinBtn.querySelector('.btn-text').textContent = '🎰 SPIN!';
+      }
+      showNotification('❌ ' + (data.message || 'Spin failed'));
+    }
+  } catch (err) {
+    console.error('Spin error:', err);
+    isSpinning = false;
+    if (modal) modal.classList.remove('spinning');
+    if (spinBtn) {
+      spinBtn.disabled = false;
+      spinBtn.querySelector('.btn-text').textContent = '🎰 SPIN!';
+    }
+    showNotification('❌ Error spinning wheel');
+  }
+}
+
+// Show spin result
+function showSpinResult(reward) {
+  const resultContainer = document.getElementById('spinResultContainer');
+  const resultIcon = document.getElementById('resultIcon');
+  const resultValue = document.getElementById('resultValue');
+  const controls = document.querySelector('.spin-controls');
+  
+  // Get icon based on reward type
+  let icon = '🎉';
+  if (reward.type === 'coins') icon = '💰';
+  else if (reward.type === 'energy') icon = '⚡';
+  else if (reward.type === 'booster') icon = '🚀';
+  else if (reward.type === 'box') icon = '📦';
+  
+  if (resultIcon) resultIcon.textContent = icon;
+  if (resultValue) resultValue.textContent = reward.label;
+  if (controls) controls.style.display = 'none';
+  if (resultContainer) resultContainer.classList.add('show');
+  
+  // Create celebration effects
+  createConfetti();
+}
+
+// Claim spin reward
+function claimSpinReward() {
+  if (!currentSpinReward) {
+    closeSpinModal();
+    return;
+  }
+  
+  // Apply reward to local state
+  if (currentSpinReward.type === 'coins') {
+    userData.coins = (userData.coins || 0) + currentSpinReward.value;
+  } else if (currentSpinReward.type === 'energy') {
+    userData.energy = userData.maxEnergy;
+  } else if (currentSpinReward.type === 'box') {
+    userData.mysteryBoxes = (userData.mysteryBoxes || 0) + currentSpinReward.value;
+  }
+  
+  updateBalanceDisplay();
+  updateSpinCount();
+  updateBoxCount();
+  
+  showNotification(`🎉 You won ${currentSpinReward.label}!`);
+  currentSpinReward = null;
+  
+  // Reset and allow another spin
+  resetSpinWheel();
+  updateModalSpinCount();
+  
+  const spinBtn = document.getElementById('spinNowBtn');
+  if (spinBtn) {
+    spinBtn.querySelector('.btn-text').textContent = '🎰 SPIN!';
+  }
+}
+
+// Get spin reward index for wheel animation
+function getSpinRewardIndex(reward) {
+  // Map reward to wheel segment index (matches HTML order)
+  const segments = [
+    { type: 'coins', value: 1000 },    // 0: 1K
+    { type: 'coins', value: 5000 },    // 1: 5K
+    { type: 'coins', value: 10000 },   // 2: 10K
+    { type: 'energy', value: 'full' }, // 3: Energy
+    { type: 'coins', value: 25000 },   // 4: 25K
+    { type: 'booster', value: '2x' },  // 5: 2x Booster
+    { type: 'coins', value: 50000 },   // 6: 50K
+    { type: 'box', value: 1 }          // 7: Box
+  ];
+  
+  for (let i = 0; i < segments.length; i++) {
+    if (segments[i].type === reward.type) {
+      if (reward.type === 'coins') {
+        // Find closest coin value
+        if (reward.value <= 2500) return 0;
+        if (reward.value <= 7500) return 1;
+        if (reward.value <= 17500) return 2;
+        if (reward.value <= 37500) return 4;
+        return 6;
+      }
+      return i;
+    }
+  }
+  return 0;
+}
+
+// Close spin modal
+function closeSpinModal() {
+  const modal = document.getElementById('spinModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.classList.remove('spinning');
+  }
+  isSpinning = false;
+  currentSpinReward = null;
+  
+  // Reset wheel after modal closes
+  setTimeout(resetSpinWheel, 300);
+}
+
+// Make functions globally available
+window.useLuckySpin = useLuckySpin;
+window.closeSpinModal = closeSpinModal;
+window.doSpin = doSpin;
+window.claimSpinReward = claimSpinReward;
+window.buyProduct = buyProduct;
+
+// Debug function to check available products
+async function debugProducts() {
+  try {
+    const response = await fetch(`${API_URL}/payment/products`);
+    const data = await response.json();
+    console.log('Available products:', data.products?.map(p => p.id));
+    return data;
+  } catch (err) {
+    console.error('Debug products error:', err);
+  }
+}
+window.debugProducts = debugProducts;
+
+// ==================== WALLET SYSTEM ====================
+
+// Initialize wallet screen
+async function initWallet() {
+  // Update balance
+  const walletBalanceEl = document.getElementById('walletBalance');
+  if (walletBalanceEl) walletBalanceEl.textContent = formatNumber(userData.coins);
+  
+  // Update token balance
+  const tokenBalanceEl = document.getElementById('tokenBalance');
+  if (tokenBalanceEl) tokenBalanceEl.textContent = formatNumber(userData.coins);
+  
+  // Calculate USD value (1M = $100, so 1 = $0.0001)
+  const usdValue = (userData.coins * 0.0001).toFixed(2);
+  const tokenUsdEl = document.getElementById('tokenUsdValue');
+  if (tokenUsdEl) tokenUsdEl.textContent = `≈ $${usdValue}`;
+  
+  // Update mining stats
+  const totalMinedEl = document.getElementById('walletTotalMined');
+  if (totalMinedEl) totalMinedEl.textContent = formatNumber(userData.totalTaps || 0);
+  
+  const miningPowerEl = document.getElementById('walletMiningPower');
+  if (miningPowerEl) miningPowerEl.textContent = formatNumber(userData.tapPower || 1);
+  
+  const perHourEl = document.getElementById('walletPerHour');
+  if (perHourEl) perHourEl.textContent = formatNumber(calculatePerHour());
+  
+  // Load user rank
+  try {
+    const response = await fetch(`${API_URL}/user/rank/${userData.telegramId}`);
+    const data = await response.json();
+    if (data.success) {
+      const rankEl = document.getElementById('walletRank');
+      if (rankEl) rankEl.textContent = `#${data.rank}`;
+    }
+  } catch (err) {
+    console.error('Load rank error:', err);
+  }
+  
+  // Update airdrop requirements
+  updateAirdropRequirements();
+}
+
+// Update airdrop requirements status
+function updateAirdropRequirements() {
+  const coins = userData.coins || 0;
+  const level = userData.level || 1;
+  const referrals = userData.referrals?.length || 0;
+  
+  // Requirement 1: Mine 10,000 $BANANA
+  const req1 = document.getElementById('req1Status');
+  const req1Item = req1?.closest('.requirement-item');
+  if (req1) {
+    if (coins >= 10000) {
+      req1.textContent = '✓';
+      req1Item?.classList.add('completed');
+    } else {
+      req1.textContent = `${formatNumber(coins)}/10K`;
+    }
+  }
+  
+  // Requirement 2: Reach Level 5
+  const req2 = document.getElementById('req2Status');
+  const req2Item = req2?.closest('.requirement-item');
+  if (req2) {
+    if (level >= 5) {
+      req2.textContent = '✓';
+      req2Item?.classList.add('completed');
+    } else {
+      req2.textContent = `Lv.${level}/5`;
+    }
+  }
+  
+  // Requirement 3: Invite 3 friends
+  const req3 = document.getElementById('req3Status');
+  const req3Item = req3?.closest('.requirement-item');
+  if (req3) {
+    if (referrals >= 3) {
+      req3.textContent = '✓';
+      req3Item?.classList.add('completed');
+    } else {
+      req3.textContent = `${referrals}/3`;
+    }
+  }
+}
+
+// Show coming soon notification
+function showComingSoon() {
+  showNotification('🚀 Coming Soon! Stay tuned for updates.');
+}
+
+window.showComingSoon = showComingSoon;

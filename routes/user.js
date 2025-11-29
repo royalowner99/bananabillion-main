@@ -99,23 +99,67 @@ router.get('/:telegramId', async (req, res) => {
   }
 });
 
-// Get Leaderboard
+// Get Leaderboard - Multiple types
 router.get('/leaderboard/top', async (req, res) => {
   try {
+    const type = req.query.type || 'coins';
+    let orderField = 'coins';
+    
+    if (type === 'miners') orderField = 'totalTaps';
+    else if (type === 'level') orderField = 'level';
+    else if (type === 'weekly') orderField = 'weeklyCoins';
+    
     const usersSnapshot = await db.collection('users')
-      .orderBy('coins', 'desc')
+      .orderBy(orderField, 'desc')
       .limit(100)
       .get();
     
-    const leaderboard = usersSnapshot.docs.map(doc => ({
-      username: doc.data().username,
-      firstName: doc.data().firstName,
-      coins: doc.data().coins,
-      level: doc.data().level,
-      totalTaps: doc.data().totalTaps
-    }));
+    const leaderboard = usersSnapshot.docs.map((doc, index) => {
+      const data = doc.data();
+      return {
+        rank: index + 1,
+        username: data.username,
+        firstName: data.firstName,
+        coins: data.coins,
+        level: data.level || 1,
+        totalTaps: data.totalTaps || 0,
+        weeklyCoins: data.weeklyCoins || 0,
+        bananaPass: data.bananaPass || false,
+        photoUrl: data.photoUrl || null
+      };
+    });
     
-    res.json({ success: true, leaderboard });
+    res.json({ success: true, leaderboard, type });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get user rank
+router.get('/rank/:telegramId', async (req, res) => {
+  try {
+    const userDoc = await db.collection('users').doc(req.params.telegramId).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    const userData = userDoc.data();
+    
+    // Count users with more coins
+    const higherCoinsSnapshot = await db.collection('users')
+      .where('coins', '>', userData.coins)
+      .count()
+      .get();
+    
+    const rank = higherCoinsSnapshot.data().count + 1;
+    
+    res.json({ 
+      success: true, 
+      rank,
+      coins: userData.coins,
+      level: userData.level,
+      totalTaps: userData.totalTaps
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

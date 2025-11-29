@@ -2,10 +2,47 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../config/firebase');
 
+// Anti-cheat: Track tap rates per user
+const tapRateLimits = new Map();
+const TAP_RATE_WINDOW = 10000; // 10 second window
+const MAX_TAPS_PER_WINDOW = 200; // Max 200 taps per 10 seconds (20/sec average)
+const SUSPICIOUS_THRESHOLD = 300; // Flag if over 300 taps in window
+
 // Tap Action - saves all user data from client
 router.post('/tap', async (req, res) => {
   try {
     const { telegramId, taps, currentCoins, currentEnergy, totalTaps, level, tapPower, maxEnergy } = req.body;
+
+    // Anti-cheat: Rate limiting
+    const now = Date.now();
+    let userTapData = tapRateLimits.get(telegramId) || { taps: 0, windowStart: now, warnings: 0, flagged: false };
+    
+    // Reset window if expired
+    if (now - userTapData.windowStart > TAP_RATE_WINDOW) {
+      userTapData = { taps: 0, windowStart: now, warnings: userTapData.warnings, flagged: userTapData.flagged };
+    }
+    
+    // Add taps to window
+    userTapData.taps += taps;
+    
+    // Check for suspicious activity
+    if (userTapData.taps > SUSPICIOUS_THRESHOLD) {
+      userTapData.flagged = true;
+      userTapData.warnings++;
+      console.log(`⚠️ Suspicious tap activity: ${telegramId} - ${userTapData.taps} taps in ${TAP_RATE_WINDOW/1000}s`);
+    }
+    
+    // Reject if over limit
+    if (userTapData.taps > MAX_TAPS_PER_WINDOW) {
+      tapRateLimits.set(telegramId, userTapData);
+      return res.status(429).json({ 
+        success: false, 
+        message: 'Too many taps! Slow down.',
+        cooldown: TAP_RATE_WINDOW - (now - userTapData.windowStart)
+      });
+    }
+    
+    tapRateLimits.set(telegramId, userTapData);
 
     const userRef = db.collection('users').doc(telegramId);
     const userDoc = await userRef.get();
@@ -15,6 +52,22 @@ router.post('/tap', async (req, res) => {
     }
 
     const user = userDoc.data();
+    
+    // Anti-cheat: Validate tap power isn't impossibly high
+    const maxPossibleTapPower = (user.tapPower || 1) * 10; // Max 10x with all boosters
+    if (tapPower && tapPower > maxPossibleTapPower) {
+      console.log(`⚠️ Suspicious tap power: ${telegramId} - claimed ${tapPower}, max possible ${maxPossibleTapPower}`);
+      return res.status(400).json({ success: false, message: 'Invalid tap power' });
+    }
+    
+    // Anti-cheat: Validate coins gained isn't impossibly high
+    const maxCoinsPerTap = maxPossibleTapPower;
+    const maxPossibleCoins = user.coins + (taps * maxCoinsPerTap);
+    if (currentCoins && currentCoins > maxPossibleCoins + 10000) { // 10k buffer for passive income
+      console.log(`⚠️ Suspicious coins: ${telegramId} - claimed ${currentCoins}, max possible ${maxPossibleCoins}`);
+      // Don't reject, but cap the coins
+      req.body.currentCoins = maxPossibleCoins;
+    }
     
     // Use client values if provided, otherwise calculate
     const newCoins = currentCoins !== undefined ? Number(currentCoins) : (user.coins + (taps * user.tapPower));
@@ -329,6 +382,73 @@ router.post('/claim-league', async (req, res) => {
       coins: newCoins,
       claimedLeagues: claimedLeagues
     });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get active boosters (clean up expired ones)
+router.get('/active-boosters/:telegramId', async (req, res) => {
+  try {
+    const userRef = db.collection('users').doc(req.params.telegramId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const user = userDoc.data();
+    const activeBoosters = user.activeBoosters || [];
+    const now = new Date();
+    
+    // Filter out expired boosters
+    const validBoosters = activeBoosters.filter(b => new Date(b.expiresAt) > now);
+    
+    // Update if any expired
+    if (validBoosters.length !== activeBoosters.length) {
+      await userRef.update({ activeBoosters: validBoosters });
+    }
+
+    res.json({ 
+      success: true, 
+      activeBoosters: validBoosters
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Sync user data (for periodic saves)
+router.post('/sync', async (req, res) => {
+  try {
+    const { telegramId, coins, energy, totalTaps, level, tapPower, maxEnergy, activeBoosters } = req.body;
+
+    const userRef = db.collection('users').doc(telegramId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const updates = {
+      lastActive: new Date().toISOString()
+    };
+    
+    if (coins !== undefined) updates.coins = Number(coins);
+    if (energy !== undefined) updates.energy = Number(energy);
+    if (totalTaps !== undefined) updates.totalTaps = Number(totalTaps);
+    if (level !== undefined) updates.level = Number(level);
+    if (tapPower !== undefined) updates.tapPower = Number(tapPower);
+    if (maxEnergy !== undefined) updates.maxEnergy = Number(maxEnergy);
+    if (activeBoosters !== undefined) {
+      // Clean up expired boosters before saving
+      const now = new Date();
+      updates.activeBoosters = activeBoosters.filter(b => new Date(b.expiresAt) > now);
+    }
+
+    await userRef.update(updates);
+
+    res.json({ success: true, message: 'Data synced' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

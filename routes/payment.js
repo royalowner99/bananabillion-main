@@ -18,7 +18,114 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 
 // Products configuration
 const PRODUCTS = {
-  // Mystery Boxes
+  // ============ COIN PACKS ============
+  coin_pack_small: {
+    id: 'coin_pack_small',
+    name: 'Starter Pack',
+    description: '50,000 Coins',
+    price: 4900,
+    currency: 'INR',
+    type: 'coin_pack',
+    coins: 50000
+  },
+  coin_pack_medium: {
+    id: 'coin_pack_medium',
+    name: 'Pro Pack',
+    description: '150,000 Coins + 10% Bonus',
+    price: 9900,
+    currency: 'INR',
+    type: 'coin_pack',
+    coins: 165000
+  },
+  coin_pack_large: {
+    id: 'coin_pack_large',
+    name: 'Elite Pack',
+    description: '500,000 Coins + 20% Bonus',
+    price: 24900,
+    currency: 'INR',
+    type: 'coin_pack',
+    coins: 600000
+  },
+  coin_pack_mega: {
+    id: 'coin_pack_mega',
+    name: 'Mega Pack',
+    description: '2,000,000 Coins + 30% Bonus',
+    price: 79900,
+    currency: 'INR',
+    type: 'coin_pack',
+    coins: 2600000
+  },
+  
+  // ============ LUCKY SPINS ============
+  spin_single: {
+    id: 'spin_single',
+    name: 'Lucky Spin',
+    description: '1 Spin - Win up to 100K!',
+    price: 1900,
+    currency: 'INR',
+    type: 'spin',
+    spins: 1
+  },
+  spin_pack: {
+    id: 'spin_pack',
+    name: 'Spin Bundle',
+    description: '5 Spins + 1 FREE',
+    price: 7900,
+    currency: 'INR',
+    type: 'spin',
+    spins: 6
+  },
+  spin_mega: {
+    id: 'spin_mega',
+    name: 'Mega Spin Pack',
+    description: '15 Spins + 5 FREE',
+    price: 19900,
+    currency: 'INR',
+    type: 'spin',
+    spins: 20
+  },
+  
+  // ============ BOOSTERS ============
+  booster_2x_1h: {
+    id: 'booster_2x_1h',
+    name: '2x Mining (1 Hour)',
+    description: 'Double mining for 1 hour',
+    price: 2900,
+    currency: 'INR',
+    type: 'booster_pack',
+    multiplier: 2,
+    duration: 3600
+  },
+  booster_3x_1h: {
+    id: 'booster_3x_1h',
+    name: '3x Mining (1 Hour)',
+    description: 'Triple mining for 1 hour',
+    price: 4900,
+    currency: 'INR',
+    type: 'booster_pack',
+    multiplier: 3,
+    duration: 3600
+  },
+  booster_5x_30m: {
+    id: 'booster_5x_30m',
+    name: '5x Mining (30 Min)',
+    description: '5x mining for 30 minutes',
+    price: 4900,
+    currency: 'INR',
+    type: 'booster_pack',
+    multiplier: 5,
+    duration: 1800
+  },
+  energy_refill: {
+    id: 'energy_refill',
+    name: 'Full Energy',
+    description: 'Instant full energy refill',
+    price: 1900,
+    currency: 'INR',
+    type: 'energy_refill'
+  },
+  
+  // ============ MYSTERY BOXES ============
   mystery_box_single: {
     id: 'mystery_box_single',
     name: 'Mystery Box',
@@ -37,7 +144,8 @@ const PRODUCTS = {
     type: 'mystery_box',
     boxes: 5
   },
-  // Profile Customization
+  
+  // ============ PROFILE COSMETICS ============
   colored_frame: {
     id: 'colored_frame',
     name: 'Colored Frame',
@@ -65,7 +173,8 @@ const PRODUCTS = {
     type: 'cosmetic',
     cosmetic: 'animated_frame'
   },
-  // Banana Pass
+  
+  // ============ VIP PASSES ============
   banana_pass: {
     id: 'banana_pass',
     name: 'Banana Pass',
@@ -110,10 +219,16 @@ router.post('/create-order', async (req, res) => {
     
     const { telegramId, productId } = req.body;
     
+    console.log('Create order request - telegramId:', telegramId, 'productId:', productId);
+    console.log('Available products:', Object.keys(PRODUCTS));
+    
     const product = PRODUCTS[productId];
     if (!product) {
-      return res.status(400).json({ success: false, message: 'Invalid product' });
+      console.log('Product not found:', productId);
+      return res.status(400).json({ success: false, message: `Invalid product: ${productId}` });
     }
+    
+    console.log('Found product:', product.name, 'Price:', product.price);
 
     // Check if user already owns this item (for cosmetics and banana pass)
     if (product.type === 'cosmetic' || product.type === 'banana_pass') {
@@ -208,29 +323,63 @@ router.post('/verify', async (req, res) => {
     let responseData = { success: true };
 
     // Apply rewards based on product type
-    if (product.type === 'mystery_box') {
+    if (product.type === 'coin_pack') {
+      updates.coins = (userData.coins || 0) + product.coins;
+      responseData.message = `Got ${product.coins.toLocaleString()} coins!`;
+      responseData.coins = updates.coins;
+      responseData.type = 'coin_pack';
+    }
+    else if (product.type === 'spin') {
+      const currentSpins = userData.luckySpins || 0;
+      updates.luckySpins = currentSpins + product.spins;
+      responseData.message = `Got ${product.spins} Lucky Spin(s)!`;
+      responseData.spins = updates.luckySpins;
+      responseData.type = 'spin';
+    }
+    else if (product.type === 'booster_pack') {
+      const activeBoosters = userData.activeBoosters || [];
+      activeBoosters.push({
+        type: `${product.multiplier}x_tap`,
+        name: product.name,
+        multiplier: product.multiplier,
+        expiresAt: new Date(Date.now() + product.duration * 1000).toISOString()
+      });
+      updates.activeBoosters = activeBoosters;
+      responseData.message = `${product.name} activated!`;
+      responseData.type = 'booster';
+    }
+    else if (product.type === 'energy_refill') {
+      updates.energy = userData.maxEnergy || 1000;
+      responseData.message = 'Energy fully restored!';
+      responseData.energy = updates.energy;
+      responseData.type = 'energy';
+    }
+    else if (product.type === 'mystery_box') {
       const currentBoxes = userData.mysteryBoxes || 0;
       updates.mysteryBoxes = currentBoxes + product.boxes;
       responseData.message = `Got ${product.boxes} Mystery Box(es)!`;
       responseData.boxes = updates.mysteryBoxes;
+      responseData.type = 'mystery_box';
     } 
     else if (product.type === 'cosmetic') {
       const ownedCosmetics = userData.ownedCosmetics || [];
       ownedCosmetics.push(product.cosmetic);
       updates.ownedCosmetics = ownedCosmetics;
-      updates.activeCosmetic = product.cosmetic; // Auto-equip
+      updates.activeCosmetic = product.cosmetic;
       responseData.message = `Unlocked ${product.name}!`;
       responseData.cosmetic = product.cosmetic;
       responseData.ownedCosmetics = ownedCosmetics;
+      responseData.type = 'cosmetic';
     }
     else if (product.type === 'banana_pass') {
       updates.bananaPass = true;
       updates.bananaPassPurchasedAt = new Date().toISOString();
-      updates.miningBonus = 20; // +20% mining
+      updates.miningBonus = 20;
       updates.specialEmoji = '🍌👑';
       updates.badge = 'banana_pass';
       responseData.message = 'Banana Pass Activated! Enjoy +20% mining, special emoji, daily 2x booster!';
       responseData.bananaPass = true;
+      responseData.type = 'banana_pass';
     }
     
     await userRef.update(updates);
@@ -421,6 +570,89 @@ router.get('/boxes/:telegramId', async (req, res) => {
 
 router.get('/products', (req, res) => {
   res.json({ success: true, products: Object.values(PRODUCTS) });
+});
+
+// Lucky Spin rewards configuration
+const SPIN_REWARDS = [
+  { type: 'coins', value: 1000, probability: 25, label: '1K Coins' },
+  { type: 'coins', value: 5000, probability: 20, label: '5K Coins' },
+  { type: 'coins', value: 10000, probability: 15, label: '10K Coins' },
+  { type: 'coins', value: 25000, probability: 10, label: '25K Coins' },
+  { type: 'coins', value: 50000, probability: 5, label: '50K Coins' },
+  { type: 'coins', value: 100000, probability: 2, label: '100K Coins!' },
+  { type: 'energy', value: 'full', probability: 10, label: 'Full Energy' },
+  { type: 'booster', value: '2x', duration: 1800, probability: 8, label: '2x Boost 30m' },
+  { type: 'booster', value: '3x', duration: 1800, probability: 3, label: '3x Boost 30m' },
+  { type: 'box', value: 1, probability: 2, label: 'Mystery Box!' }
+];
+
+// Use Lucky Spin
+router.post('/use-spin', async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    const userRef = db.collection('users').doc(telegramId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    const userData = userDoc.data();
+    if (!userData.luckySpins || userData.luckySpins < 1) {
+      return res.status(400).json({ success: false, message: 'No spins available' });
+    }
+    
+    // Get random reward
+    const reward = weightedRandom(SPIN_REWARDS);
+    let updates = { luckySpins: userData.luckySpins - 1 };
+    
+    // Apply reward
+    if (reward.type === 'coins') {
+      updates.coins = (userData.coins || 0) + reward.value;
+    } else if (reward.type === 'energy') {
+      updates.energy = userData.maxEnergy || 1000;
+    } else if (reward.type === 'booster') {
+      const activeBoosters = userData.activeBoosters || [];
+      const multiplier = reward.value === '3x' ? 3 : 2;
+      activeBoosters.push({
+        type: `${multiplier}x_tap`,
+        name: `${multiplier}x Spin Booster`,
+        multiplier: multiplier,
+        expiresAt: new Date(Date.now() + reward.duration * 1000).toISOString()
+      });
+      updates.activeBoosters = activeBoosters;
+    } else if (reward.type === 'box') {
+      updates.mysteryBoxes = (userData.mysteryBoxes || 0) + reward.value;
+    }
+    
+    await userRef.update(updates);
+    
+    res.json({
+      success: true,
+      reward: {
+        type: reward.type,
+        value: reward.value,
+        label: reward.label
+      },
+      remainingSpins: userData.luckySpins - 1
+    });
+  } catch (error) {
+    console.error('Spin error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get user spins count
+router.get('/spins/:telegramId', async (req, res) => {
+  try {
+    const userDoc = await db.collection('users').doc(req.params.telegramId).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, spins: userDoc.data().luckySpins || 0 });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 module.exports = router;
