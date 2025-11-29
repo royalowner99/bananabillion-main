@@ -78,11 +78,13 @@ try {
 
 // Bot Commands (only if bot is initialized)
 if (bot) {
-bot.onText(/\/start(.*)/, async (msg, match) => {
+bot.onText(/\/start\s*(.*)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const username = msg.from.username || msg.from.first_name;
-  const referralCode = match[1] ? match[1].trim().replace(/\s+/g, '') : null;
+  // Extract referral code - remove any whitespace
+  const rawCode = match[1] ? match[1].trim() : null;
+  const referralCode = rawCode && rawCode.length > 0 ? rawCode : null;
   
   console.log(`📨 /start command from user ${userId} (${username}), referral: ${referralCode}`);
   

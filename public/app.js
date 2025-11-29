@@ -1004,6 +1004,51 @@ function switchScreen(screenName) {
   if (screenName === 'boost') {
     renderBoostScreen();
   }
+  if (screenName === 'friends') {
+    loadReferrals();
+  }
+}
+
+// Load referrals data
+async function loadReferrals() {
+  try {
+    const response = await fetch(`${API_URL}/user/referrals/${userData.telegramId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update referral code display
+      const codeEl = document.getElementById('referralCode');
+      if (codeEl) codeEl.textContent = data.referralCode || userData.referralCode;
+      
+      // Update stats
+      const totalEl = document.getElementById('totalReferrals');
+      if (totalEl) totalEl.textContent = data.totalReferrals || 0;
+      
+      const earningsEl = document.getElementById('referralEarnings');
+      if (earningsEl) earningsEl.textContent = formatNumber(data.totalEarnings || 0);
+      
+      // Render referrals list
+      const listEl = document.getElementById('referralsList');
+      if (listEl) {
+        if (data.referrals && data.referrals.length > 0) {
+          listEl.innerHTML = data.referrals.map(ref => `
+            <div class="referral-item">
+              <div class="referral-avatar">👤</div>
+              <div class="referral-info">
+                <span class="referral-name">${ref.username || ref.firstName}</span>
+                <span class="referral-date">Lv.${ref.level || 1}</span>
+              </div>
+              <div class="referral-bonus">+2,500 🍌</div>
+            </div>
+          `).join('');
+        } else {
+          listEl.innerHTML = '<p class="no-referrals">No referrals yet. Share your link!</p>';
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Load referrals error:', err);
+  }
 }
 
 // Show Notification - Always use custom toast (Telegram methods not supported in browser)
