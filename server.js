@@ -58,6 +58,7 @@ app.get('/', (req, res) => {
 
 // Telegram Bot - with error handling for network issues
 let bot = null;
+global.bot = null; // Expose globally for admin panel
 const isProduction = process.env.NODE_ENV === 'production';
 
 try {
@@ -70,6 +71,7 @@ try {
     bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
     console.log('🤖 Telegram Bot initialized (polling mode)');
   }
+  global.bot = bot; // Make bot accessible globally
   console.log('📱 Bot Username:', process.env.BOT_USERNAME);
 } catch (error) {
   console.log('⚠️ Bot initialization failed:', error.message);

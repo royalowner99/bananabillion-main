@@ -2703,6 +2703,98 @@ body {
   margin-bottom: 15px;
 }
 
+/* Gifts Section */
+.gifts-section {
+  background: linear-gradient(135deg, rgba(247, 179, 43, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 25px;
+  border: 1px solid rgba(247, 179, 43, 0.2);
+}
+
+.gifts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.gift-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.gift-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(247, 179, 43, 0.2);
+}
+
+.gift-card:active {
+  transform: scale(0.95);
+}
+
+.gift-icon {
+  font-size: 40px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.gift-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.gift-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gift-count {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.gift-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, #d4941f 100%);
+  color: #000;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gift-btn:hover {
+  transform: scale(1.05);
+}
+
+.gift-card.empty {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.gift-card.empty .gift-btn {
+  background: #444;
+}
+
 /* Daily Free Boosters */
 .daily-boosters-grid {
   display: grid;

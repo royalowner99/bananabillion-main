@@ -93,7 +93,152 @@ router.get('/:telegramId', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.json({ success: true, user: userDoc.data() });
+    const userData = userDoc.data();
+    
+    // Include gifts data
+    res.json({ 
+      success: true, 
+      user: userData,
+      gifts: {
+        freeSpins: userData.freeSpins || 0,
+        mysteryBoxes: userData.mysteryBoxes || [],
+        lastGift: userData.lastGift || null,
+        notifications: userData.notifications || []
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Check for pending gifts/rewards
+router.get('/:telegramId/gifts', async (req, res) => {
+  try {
+    const userDoc = await db.collection('users').doc(req.params.telegramId).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    
+    res.json({ 
+      success: true,
+      freeSpins: userData.freeSpins || 0,
+      mysteryBoxes: userData.mysteryBoxes || [],
+      lastGift: userData.lastGift || null,
+      spinGift: userData.spinGift || null,
+      notifications: (userData.notifications || []).filter(n => !n.read)
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Use a free spin
+router.post('/:telegramId/use-spin', async (req, res) => {
+  try {
+    const userRef = db.collection('users').doc(req.params.telegramId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    const freeSpins = userData.freeSpins || 0;
+    
+    if (freeSpins <= 0) {
+      return res.status(400).json({ success: false, message: 'No free spins available' });
+    }
+    
+    // Generate random reward
+    const rewards = [
+      { type: 'coins', amount: 100, chance: 30 },
+      { type: 'coins', amount: 500, chance: 25 },
+      { type: 'coins', amount: 1000, chance: 20 },
+      { type: 'coins', amount: 5000, chance: 15 },
+      { type: 'coins', amount: 10000, chance: 7 },
+      { type: 'coins', amount: 50000, chance: 2 },
+      { type: 'energy', amount: 500, chance: 1 }
+    ];
+    
+    // Weighted random selection
+    const totalChance = rewards.reduce((sum, r) => sum + r.chance, 0);
+    let random = Math.random() * totalChance;
+    let reward = rewards[0];
+    
+    for (const r of rewards) {
+      random -= r.chance;
+      if (random <= 0) {
+        reward = r;
+        break;
+      }
+    }
+    
+    // Apply reward
+    const updates = { freeSpins: freeSpins - 1 };
+    
+    if (reward.type === 'coins') {
+      updates.coins = (userData.coins || 0) + reward.amount;
+    } else if (reward.type === 'energy') {
+      updates.energy = Math.min((userData.energy || 0) + reward.amount, userData.maxEnergy || 1000);
+    }
+    
+    await userRef.update(updates);
+    
+    res.json({ 
+      success: true, 
+      reward,
+      remainingSpins: freeSpins - 1
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Open mystery box
+router.post('/:telegramId/open-mystery-box', async (req, res) => {
+  try {
+    const { boxIndex } = req.body;
+    const userRef = db.collection('users').doc(req.params.telegramId);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    const mysteryBoxes = userData.mysteryBoxes || [];
+    
+    if (!mysteryBoxes.length || boxIndex >= mysteryBoxes.length) {
+      return res.status(400).json({ success: false, message: 'No mystery box available' });
+    }
+    
+    const box = mysteryBoxes[boxIndex];
+    
+    // Generate reward based on box type
+    const min = box.minReward || 100;
+    const max = box.maxReward || 1000;
+    const rewardAmount = Math.floor(Math.random() * (max - min + 1)) + min;
+    
+    // Remove the opened box
+    mysteryBoxes.splice(boxIndex, 1);
+    
+    // Add coins
+    const newCoins = (userData.coins || 0) + rewardAmount;
+    
+    await userRef.update({
+      mysteryBoxes,
+      coins: newCoins
+    });
+    
+    res.json({ 
+      success: true, 
+      reward: { type: 'coins', amount: rewardAmount },
+      boxType: box.type,
+      remainingBoxes: mysteryBoxes.length
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

@@ -210,6 +210,9 @@ function updateAllUI() {
   
   console.log('Updating UI with coins:', userData.coins);
   
+  // Update gift counts
+  updateGiftUI();
+  
   // Update username
   const usernameEl = document.getElementById('username');
   if (usernameEl) usernameEl.textContent = userData.username || 'Miner';
@@ -1058,6 +1061,139 @@ function checkDailyReward() {
   const hoursSince = (Date.now() - new Date(lastReward).getTime()) / (1000 * 60 * 60);
   if (hoursSince >= 24) {
     showDailyReward();
+  }
+  
+  // Also check for gifts
+  checkForGifts();
+}
+
+// Check for pending gifts from admin
+async function checkForGifts() {
+  try {
+    const response = await fetch(`${API_URL}/user/${userData.telegramId}/gifts`);
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update local data
+      userData.freeSpins = data.freeSpins || 0;
+      userData.mysteryBoxes = data.mysteryBoxes || [];
+      
+      // Show gift notification if there are gifts
+      if (data.freeSpins > 0) {
+        showNotification(`🎰 You have ${data.freeSpins} free spins!`);
+      }
+      if (data.mysteryBoxes && data.mysteryBoxes.length > 0) {
+        showNotification(`📦 You have ${data.mysteryBoxes.length} mystery box(es)!`);
+      }
+      if (data.lastGift) {
+        showNotification(data.lastGift.message || '🎁 You received a gift!');
+      }
+      
+      // Update UI badges
+      updateGiftBadges();
+    }
+  } catch (error) {
+    console.error('Gift check error:', error);
+  }
+}
+
+// Update gift badges in UI
+function updateGiftBadges() {
+  const spins = userData.freeSpins || 0;
+  const boxes = (userData.mysteryBoxes || []).length;
+  
+  // Update boost tab badge if there are gifts
+  const boostBadge = document.querySelector('[data-screen="boost"] .badge');
+  if (boostBadge && (spins > 0 || boxes > 0)) {
+    boostBadge.textContent = spins + boxes;
+    boostBadge.style.display = 'flex';
+  }
+}
+
+// Update gift UI elements
+function updateGiftUI() {
+  const spins = userData.freeSpins || 0;
+  const boxes = (userData.mysteryBoxes || []).length;
+  
+  // Update spin count
+  const spinsCountEl = document.getElementById('freeSpinsCount');
+  if (spinsCountEl) spinsCountEl.textContent = spins;
+  
+  // Update mystery box count
+  const boxCountEl = document.getElementById('mysteryBoxCount');
+  if (boxCountEl) boxCountEl.textContent = boxes;
+  
+  // Update card states
+  const spinsCard = document.getElementById('freeSpinsCard');
+  if (spinsCard) spinsCard.classList.toggle('empty', spins <= 0);
+  
+  const boxCard = document.getElementById('mysteryBoxCard');
+  if (boxCard) boxCard.classList.toggle('empty', boxes <= 0);
+  
+  // Update badges
+  updateGiftBadges();
+}
+
+// Use free spin
+async function useFreeSpin() {
+  if (!userData.freeSpins || userData.freeSpins <= 0) {
+    showNotification('❌ No free spins available');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/user/${userData.telegramId}/use-spin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      userData.freeSpins = data.remainingSpins;
+      if (data.reward.type === 'coins') {
+        userData.coins += data.reward.amount;
+      } else if (data.reward.type === 'energy') {
+        userData.energy = Math.min(userData.energy + data.reward.amount, userData.maxEnergy);
+      }
+      updateAllUI();
+      showNotification(`🎰 You won ${formatNumber(data.reward.amount)} ${data.reward.type}!`);
+    } else {
+      showNotification('❌ ' + (data.message || 'Spin failed'));
+    }
+  } catch (error) {
+    console.error('Spin error:', error);
+    showNotification('❌ Network error');
+  }
+}
+
+// Open mystery box
+async function openMysteryBox(index = 0) {
+  if (!userData.mysteryBoxes || userData.mysteryBoxes.length === 0) {
+    showNotification('❌ No mystery boxes available');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_URL}/user/${userData.telegramId}/open-mystery-box`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ boxIndex: index })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      userData.mysteryBoxes = userData.mysteryBoxes.filter((_, i) => i !== index);
+      userData.coins += data.reward.amount;
+      updateAllUI();
+      
+      const boxEmoji = data.boxType === 'legendary' ? '🟡' : data.boxType === 'epic' ? '🟣' : data.boxType === 'rare' ? '🔵' : '🟢';
+      showNotification(`${boxEmoji} Mystery Box: +${formatNumber(data.reward.amount)} coins!`);
+    } else {
+      showNotification('❌ ' + (data.message || 'Failed to open box'));
+    }
+  } catch (error) {
+    console.error('Mystery box error:', error);
+    showNotification('❌ Network error');
   }
 }
 
