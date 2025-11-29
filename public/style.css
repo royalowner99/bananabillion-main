@@ -301,27 +301,28 @@ body {
 
 /* ==================== QUICK ACCESS CARDS ==================== */
 .quick-access-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 0 12px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 15px 15px;
   margin: 0;
 }
 
 .quick-card {
+  flex: 1;
   background: var(--bg-card);
-  border-radius: 12px;
-  padding: 12px 8px;
+  border-radius: 14px;
+  padding: 14px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s ease;
   position: relative;
-  min-height: 70px;
+  min-height: 75px;
 }
 
 .quick-card:active {
@@ -329,78 +330,71 @@ body {
 }
 
 .quick-icon {
-  font-size: 24px;
-  display: block;
+  font-size: 26px;
+  line-height: 1;
 }
 
 .quick-label {
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #fff;
   text-align: center;
-  white-space: nowrap;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  line-height: 1;
+  letter-spacing: 0.3px;
 }
 
 .quick-badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 5px;
+  right: 5px;
   background: var(--danger);
   color: white;
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 700;
-  padding: 2px 4px;
+  padding: 2px 5px;
   border-radius: 6px;
 }
 
 /* Quick card color variants */
 .shop-card {
-  background: linear-gradient(135deg, rgba(247, 179, 43, 0.15) 0%, var(--bg-card) 100%);
-  border-color: rgba(247, 179, 43, 0.2);
+  background: linear-gradient(135deg, rgba(247, 179, 43, 0.2) 0%, var(--bg-card) 100%);
+  border-color: rgba(247, 179, 43, 0.3);
 }
 
 .miners-card {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, var(--bg-card) 100%);
-  border-color: rgba(139, 92, 246, 0.2);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, var(--bg-card) 100%);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
 .wallet-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, var(--bg-card) 100%);
-  border-color: rgba(16, 185, 129, 0.2);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, var(--bg-card) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .leaderboard-card {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, var(--bg-card) 100%);
-  border-color: rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, var(--bg-card) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 /* Mobile responsive for quick access */
-@media (max-width: 360px) {
+@media (max-width: 380px) {
   .quick-access-row {
-    gap: 6px;
-    padding: 0 8px 8px;
+    gap: 8px;
+    padding: 5px 10px 12px;
   }
   
   .quick-card {
-    padding: 8px 4px;
-    min-height: 58px;
-    border-radius: 10px;
+    padding: 12px 6px;
+    min-height: 68px;
+    border-radius: 12px;
   }
   
   .quick-icon {
-    font-size: 18px;
+    font-size: 22px;
   }
   
   .quick-label {
-    font-size: 9px;
-  }
-  
-  .quick-badge {
-    font-size: 6px;
-    padding: 1px 3px;
+    font-size: 10px;
   }
 }
 
