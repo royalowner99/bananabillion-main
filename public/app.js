@@ -172,6 +172,10 @@ async function initApp() {
       
       console.log('User loaded:', userData.username, 'Coins:', userData.coins, 'TapPower:', userData.tapPower, 'BananaPass:', userData.bananaPass);
       
+      // Check for offline earnings
+      const offlineEarnings = data.user.offlineEarnings || 0;
+      const energyRestored = data.user.energyRestored || 0;
+      
       // Load daily booster data on init
       loadDailyBoosterData();
       
@@ -193,6 +197,20 @@ async function initApp() {
       setTimeout(() => {
         document.getElementById('loading').classList.remove('active');
         document.getElementById('game').classList.add('active');
+        
+        // Show offline earnings notification after game loads
+        if (offlineEarnings > 0 || energyRestored > 0) {
+          setTimeout(() => {
+            let message = '🌙 Welcome back!';
+            if (offlineEarnings > 0) {
+              message += ` You earned ${formatNumber(offlineEarnings)} 🍌 while away!`;
+            }
+            if (energyRestored > 0) {
+              message += ` ⚡ +${energyRestored} energy restored.`;
+            }
+            showNotification(message);
+          }, 500);
+        }
       }, 2000);
     }
   } catch (error) {

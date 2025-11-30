@@ -75,9 +75,65 @@ router.post('/init', async (req, res) => {
       await userRef.set(newUser);
       res.json({ success: true, user: newUser });
     } else {
-      // Update last active
-      await userRef.update({ lastActive: new Date().toISOString() });
-      res.json({ success: true, user: userDoc.data() });
+      // Existing user - calculate offline energy regeneration
+      const userData = userDoc.data();
+      const now = new Date();
+      const lastActive = userData.lastActive ? new Date(userData.lastActive) : now;
+      
+      // Calculate time offline in seconds
+      const offlineSeconds = Math.floor((now - lastActive) / 1000);
+      
+      // Energy regenerates 1 per 3 seconds
+      const energyRegen = Math.floor(offlineSeconds / 3);
+      const currentEnergy = Number(userData.energy) || 0;
+      const maxEnergy = Number(userData.maxEnergy) || 1000;
+      const newEnergy = Math.min(currentEnergy + energyRegen, maxEnergy);
+      
+      // Calculate offline passive income from miners
+      let offlineCoins = 0;
+      if (userData.miners && Object.keys(userData.miners).length > 0) {
+        // Calculate per hour income
+        let perHour = 0;
+        const MINERS = {
+          basic: { basePower: 10, basePrice: 100 },
+          advanced: { basePower: 50, basePrice: 500 },
+          quantum: { basePower: 200, basePrice: 2000 },
+          fusion: { basePower: 500, basePrice: 5000 },
+          antimatter: { basePower: 1500, basePrice: 15000 },
+          darkMatter: { basePower: 5000, basePrice: 50000 },
+          cosmic: { basePower: 10000, basePrice: 100000 },
+          stellar: { basePower: 10000, basePrice: 10000000 }
+        };
+        
+        for (const [minerId, level] of Object.entries(userData.miners)) {
+          if (MINERS[minerId] && level > 0) {
+            perHour += MINERS[minerId].basePower * level;
+          }
+        }
+        
+        // Cap offline time to 3 hours max for passive income
+        const cappedOfflineSeconds = Math.min(offlineSeconds, 3 * 60 * 60);
+        offlineCoins = Math.floor((perHour / 3600) * cappedOfflineSeconds);
+      }
+      
+      const newCoins = (Number(userData.coins) || 0) + offlineCoins;
+      
+      // Update user with new energy and coins
+      await userRef.update({ 
+        lastActive: now.toISOString(),
+        energy: newEnergy,
+        coins: newCoins
+      });
+      
+      const updatedUser = {
+        ...userData,
+        energy: newEnergy,
+        coins: newCoins,
+        offlineEarnings: offlineCoins,
+        energyRestored: newEnergy - currentEnergy
+      };
+      
+      res.json({ success: true, user: updatedUser });
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
