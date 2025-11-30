@@ -51,6 +51,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Debug endpoint (remove in production)
+app.get('/debug-admin', (req, res) => {
+  res.json({
+    adminUser: process.env.ADMIN_USERNAME || 'admin (default)',
+    adminPassSet: process.env.ADMIN_PASSWORD ? 'yes' : 'no (using default)',
+    envKeys: Object.keys(process.env).filter(k => k.includes('ADMIN'))
+  });
+});
+
 // Root route - serve index.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
