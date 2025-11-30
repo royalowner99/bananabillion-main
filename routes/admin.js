@@ -36,13 +36,11 @@ router.post('/login', async (req, res) => {
     
     console.log('Login attempt:', { 
       username, 
-      password: password ? '***' : 'empty',
-      expectedUser: ADMIN_USERNAME,
-      userMatch: username === ADMIN_USERNAME,
-      passMatch: password === ADMIN_PASSWORD
+      expectedUser: ADMIN_USERNAME
     });
     
-    if (!username || username !== ADMIN_USERNAME) {
+    // Case-insensitive username check
+    if (!username || username.toLowerCase() !== ADMIN_USERNAME.toLowerCase()) {
       logActivity('error', `Failed login attempt: ${username}`);
       return res.status(403).json({ success: false, message: 'Invalid username' });
     }
