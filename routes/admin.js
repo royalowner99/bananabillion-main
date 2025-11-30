@@ -34,7 +34,13 @@ router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    console.log('Login attempt:', { username, password: password ? '***' : 'empty' });
+    console.log('Login attempt:', { 
+      username, 
+      password: password ? '***' : 'empty',
+      expectedUser: ADMIN_USERNAME,
+      userMatch: username === ADMIN_USERNAME,
+      passMatch: password === ADMIN_PASSWORD
+    });
     
     if (!username || username !== ADMIN_USERNAME) {
       logActivity('error', `Failed login attempt: ${username}`);
