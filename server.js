@@ -216,6 +216,17 @@ app.post(`/webhook/${process.env.BOT_TOKEN}`, (req, res) => {
   res.sendStatus(200);
 });
 
+// Keep-alive ping to prevent Render free tier sleep
+const WEBAPP_URL = process.env.WEBAPP_URL || 'https://bananabillion-main.onrender.com';
+setInterval(() => {
+  const https = require('https');
+  https.get(`${WEBAPP_URL}/health`, (res) => {
+    console.log(`🏓 Keep-alive ping: ${res.statusCode}`);
+  }).on('error', (err) => {
+    console.log('Keep-alive ping failed:', err.message);
+  });
+}, 14 * 60 * 1000); // Ping every 14 minutes
+
 // Start Server
 app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
